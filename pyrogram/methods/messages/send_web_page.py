@@ -79,6 +79,18 @@ class SendWebPage:
                 Link that will be previewed.
                 If url not specified, the first URL found in the text will be used.
 
+            prefer_small_media (``bool``, *optional*):
+                True, if the media in the link preview is supposed to be shrunk.
+                Ignored if the URL isn't explicitly specified or media size change isn't supported for the preview.
+
+            prefer_large_media (``bool``, *optional*):
+                True, if the media in the link preview is supposed to be enlarged.
+                Ignored if the URL isn't explicitly specified or media size change isn't supported for the preview.
+
+            show_caption_above_media (``bool``, *optional*):
+                True, if the link preview must be shown above the message text.
+                Otherwise, the link preview will be shown below the message text.
+
             parse_mode (:obj:`~pyrogram.enums.ParseMode`, *optional*):
                 By default, texts are parsed using both Markdown and HTML styles.
                 You can combine both syntaxes together.
