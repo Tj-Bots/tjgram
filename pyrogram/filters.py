@@ -999,7 +999,7 @@ def command(commands: Union[str, List[str]], prefixes: Optional[Union[str, List[
         commands (``str`` | ``list``):
             The command or list of commands as string the filter should look for.
             Examples: "start", ["start", "help", "settings"]. When a message text containing
-            a command arrives, the command itself and its arguments will be stored in the *command*
+            a command arrives, the matched-prefix, matched-command and its content will be stored in the *command*
             field of the :obj:`~pyrogram.types.Message`.
 
         prefixes (``str`` | ``list``, *optional*):
@@ -1011,8 +1011,6 @@ def command(commands: Union[str, List[str]], prefixes: Optional[Union[str, List[
             Pass True if you want your command(s) to be case sensitive. Defaults to False.
             Examples: when True, command="Start" would trigger /Start but not /start.
     """
-    command_re = re.compile(r"([\"'])(.*?)(?<!\\)\1|(\S+)")
-
     async def func(flt, client: pyrogram.Client, message: Message):
         username = client.me.username or ""
         text = message.text or message.caption
@@ -1035,14 +1033,7 @@ def command(commands: Union[str, List[str]], prefixes: Optional[Union[str, List[
                 without_command = re.sub(rf"{cmd}(?:@?{username})?\s?", "", without_prefix, count=1,
                                          flags=re.IGNORECASE if not flt.case_sensitive else 0)
 
-                # match.groups are 1-indexed, group(1) is the quote, group(2) is the text
-                # between the quotes, group(3) is unquoted, whitespace-split text
-
-                # Remove the escape character from the arguments
-                message.command = [cmd] + [
-                    re.sub(r"\\([\"'])", r"\1", m.group(2) or m.group(3) or "")
-                    for m in command_re.finditer(without_command)
-                ]
+                message.command = (prefix, cmd, without_command)
 
                 return True
 

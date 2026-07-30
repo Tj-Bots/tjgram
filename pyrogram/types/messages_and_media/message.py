@@ -20,7 +20,7 @@ import contextlib
 import logging
 from datetime import datetime
 from functools import partial
-from typing import BinaryIO, Callable, Dict, List, Match, Optional, Union
+from typing import BinaryIO, Callable, Dict, List, Match, Optional, Tuple, Union
 
 import pyrogram
 from pyrogram import enums, raw, types, utils
@@ -385,9 +385,9 @@ class Message(Object, Update):
             A list containing all `Match Objects <https://docs.python.org/3/library/re.html#match-objects>`_ that match
             the text of this message. Only applicable when using :obj:`Filters.regex <pyrogram.Filters.regex>`.
 
-        command (List of ``str``, *optional*):
-            A list containing the command and its arguments, if any.
-            E.g.: "/start 1 2 3" would produce ["start", "1", "2", "3"].
+        command (Tuple of ``str``, *optional*):
+            A tuple containing the matched-prefix, matched-command and the content after it.
+            E.g.: "/fact Kurigram is cool!" would produce ("/", "fact", "Kurigram is cool!")
             Only applicable when using :obj:`~pyrogram.filters.command`.
 
         forum_topic_created (:obj:`~pyrogram.types.ForumTopicCreated`, *optional*):
@@ -731,7 +731,7 @@ class Message(Object, Update):
         via_bot: Optional["types.User"] = None,
         outgoing: Optional[bool] = None,
         matches: Optional[List[Match]] = None,
-        command: Optional[List[str]] = None,
+        command: Optional[Tuple[str]] = None,
         forum_topic_created: Optional["types.ForumTopicCreated"] = None,
         forum_topic_closed: Optional["types.ForumTopicClosed"] = None,
         forum_topic_reopened: Optional["types.ForumTopicReopened"] = None,
