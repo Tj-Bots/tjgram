@@ -33,6 +33,8 @@ class SendRichMessage:
         disable_notification: Optional[bool] = None,
         message_thread_id: Optional[int] = None,
         direct_messages_topic_id: Optional[int] = None,
+        receiver_user_id: Optional[Union[int, str]] = None,
+        callback_query_id: Optional[str] = None,
         effect_id: Optional[int] = None,
         reply_parameters: Optional["types.ReplyParameters"] = None,
         protect_content: Optional[bool] = None,
@@ -72,6 +74,15 @@ class SendRichMessage:
             direct_messages_topic_id (``int``, *optional*):
                 Unique identifier of the topic in a channel direct messages chat administered by the current user.
                 For direct chats only.only.
+
+            receiver_user_id (``int`` | ``str``, *optional*):
+                For outgoing ephemeral messages, unique identifier (int) or username (str) of the user who will receive the message.
+                For group and supergroup chats only.
+                It is not guaranteed that the user will receive the message, especially if they are offline.
+                See `ephemeral message sending <https://core.telegram.org/bots/api#ephemeral-messages-and-commands>`__ for more details.
+
+            callback_query_id (``str``, *optional*):
+                For outgoing ephemeral messages, identifier of the callback query which triggered the message if any.
 
             effect_id (``int``, *optional*):
                 Unique identifier of the message effect.
@@ -118,8 +129,24 @@ class SendRichMessage:
                     ),
                 )
         """
-        r = await self.invoke(
-            raw.functions.messages.SendMessage(
+        if receiver_user_id:
+            rpc = raw.functions.ephemeral.SendMessage(
+                peer=await self.resolve_peer(chat_id),
+                receiver_id=await self.resolve_peer(receiver_user_id),
+                query_id=int(callback_query_id) if callback_query_id is not None else None,
+                reply_to=await utils.get_reply_to(
+                    self,
+                    reply_parameters,
+                    message_thread_id,
+                    direct_messages_topic_id
+                ),
+                random_id=self.rnd_id(),
+                reply_markup=await reply_markup.write(self) if reply_markup else None,
+                message="",
+                rich_message=rich_message.write(),
+            )
+        else:
+            rpc = raw.functions.messages.SendMessage(
                 peer=await self.resolve_peer(chat_id),
                 silent=disable_notification or None,
                 reply_to=await utils.get_reply_to(
@@ -135,9 +162,9 @@ class SendRichMessage:
                 noforwards=protect_content,
                 rich_message=rich_message.write(),
                 effect=effect_id,
-            ),
-            business_connection_id=business_connection_id,
-        )
+            )
+
+        r = await self.invoke(rpc, business_connection_id=business_connection_id)
 
         if isinstance(r, raw.types.UpdateShortSentMessage):
             peer = await self.resolve_peer(chat_id)
