@@ -22,14 +22,14 @@
     </a>
     <br/>
     <br/>
-    <a href="https://pypi.python.org/pypi/kurigram">
-        <img src="https://img.shields.io/pypi/v/kurigram.svg?logo=pypi&logoColor=white" alt="PyPI package version">
+    <a href="https://pypi.python.org/pypi/tjgram">
+        <img src="https://img.shields.io/pypi/v/tjgram.svg?logo=pypi&logoColor=white" alt="PyPI package version">
     </a>
-    <a href="https://pypi.python.org/pypi/kurigram">
-        <img src="https://img.shields.io/pypi/l/kurigram.svg" alt="License">
+    <a href="https://pypi.python.org/pypi/tjgram">
+        <img src="https://img.shields.io/pypi/l/tjgram.svg" alt="License">
     </a>
-    <a href="https://pypi.python.org/pypi/kurigram">
-        <img src="https://img.shields.io/pypi/pyversions/kurigram.svg" alt="Python versions">
+    <a href="https://pypi.python.org/pypi/tjgram">
+        <img src="https://img.shields.io/pypi/pyversions/tjgram.svg" alt="Python versions">
     </a>
 </p>
 
@@ -81,13 +81,13 @@ Thank you for supporting Kurigram ❤️
 Stable version
 
 ``` bash
-pip install kurigram
+pip install tjgram
 ```
 
 Dev version
 
 ``` bash
-pip install https://github.com/KurimuzonAkuma/kurigram/archive/dev.zip --force-reinstall
+pip install https://github.com/tj-bots/tjgram/archive/dev.zip --force-reinstall
 ```
 
 ### Resources
