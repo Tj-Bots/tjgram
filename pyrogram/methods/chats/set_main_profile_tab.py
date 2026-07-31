@@ -50,7 +50,7 @@ class SetMainProfileTab:
                 await app.set_main_profile_tab("me", main_profile_tab=enums.ProfileTab.POSTS)
 
                 # Set channel main profile tab to "Gifts"
-                await app.set_main_profile_tab("kurigram_news", main_profile_tab=enums.ProfileTab.GIFTS)
+                await app.set_main_profile_tab("tjgram_news", main_profile_tab=enums.ProfileTab.GIFTS)
         """
         peer = await self.resolve_peer(chat_id)
 

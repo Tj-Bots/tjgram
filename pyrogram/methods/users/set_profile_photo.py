@@ -123,13 +123,13 @@ class SetBotProfilePhoto:
             .. code-block:: python
 
                 # Set a new bot profile photo
-                await app.set_bot_profile_photo(bot_user_id="@KurigramBot", photo=types.InputChatPhotoStatic("new_photo.jpg"))
+                await app.set_bot_profile_photo(bot_user_id="@tjgramBot", photo=types.InputChatPhotoStatic("new_photo.jpg"))
 
                 # Set a new bot profile video
-                await app.set_bot_profile_photo(bot_user_id="@KurigramBot", photo=types.InputChatPhotoAnimation("new_video.mp4"))
+                await app.set_bot_profile_photo(bot_user_id="@tjgramBot", photo=types.InputChatPhotoAnimation("new_video.mp4"))
 
                 # Remove bot profile photo
-                await app.set_bot_profile_photo(bot_user_id="@KurigramBot")
+                await app.set_bot_profile_photo(bot_user_id="@tjgramBot")
         """
         if isinstance(photo, types.InputChatPhotoPrevious):
             return bool(
