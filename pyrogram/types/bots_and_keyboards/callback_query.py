@@ -205,9 +205,10 @@ class CallbackQuery(Object, Update):
 
     async def edit_message_text(
         self,
-        text: str,
+        text: Optional[str] = None,
         parse_mode: Optional["enums.ParseMode"] = None,
         link_preview_options: "types.LinkPreviewOptions" = None,
+        rich_message: Optional["types.InputRichMessage"] = None,
         reply_markup: "types.InlineKeyboardMarkup" = None,
         disable_web_page_preview: bool = None,
     ) -> Union["types.Message", bool]:
@@ -216,8 +217,9 @@ class CallbackQuery(Object, Update):
         Bound method *edit_message_text* of :obj:`~pyrogram.types.CallbackQuery`.
 
         Parameters:
-            text (``str``):
+            text (``str``, *optional*):
                 New text of the message.
+                Required if rich_message isn't specified.
 
             parse_mode (:obj:`~pyrogram.enums.ParseMode`, *optional*):
                 By default, texts are parsed using both Markdown and HTML styles.
@@ -225,6 +227,10 @@ class CallbackQuery(Object, Update):
 
             link_preview_options (:obj:`~pyrogram.types.LinkPreviewOptions`, *optional*):
                 Options used for link preview generation for the message.
+
+            rich_message (:obj:`~pyrogram.types.InputRichMessage`, *optional*):
+                New rich content of the message.
+                Required if text isn't specified.
 
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup`, *optional*):
                 An InlineKeyboardMarkup object.
@@ -249,6 +255,7 @@ class CallbackQuery(Object, Update):
                 text=text,
                 parse_mode=parse_mode,
                 link_preview_options=link_preview_options,
+                rich_message=rich_message,
                 reply_markup=reply_markup
             )
         else:
@@ -257,6 +264,7 @@ class CallbackQuery(Object, Update):
                 text=text,
                 parse_mode=parse_mode,
                 link_preview_options=link_preview_options,
+                rich_message=rich_message,
                 reply_markup=reply_markup
             )
 
