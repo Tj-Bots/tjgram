@@ -4,6 +4,7 @@ ALLOW_PAYMENT_REQUIRED_X	The user has enabled paid messages with {value} stars.
 ANONYMOUS_REACTIONS_DISABLED	Sorry, anonymous administrators cannot leave reactions or participate in polls.
 BOT_ACCESS_FORBIDDEN	You can't access this bot.
 BOT_FORUM_CREATE_FORBIDDEN	This bot prevents users from creating or deleting topics.
+BOT_GUARD_NOT_SUPPORTED	This bot is not designated as a "join guard" bot. This method is only available to bots that mediate user joins to chats. .
 BOT_OWNER_REQUIRED	You must be the owner of the bot to perform this action.
 BOT_VERIFIER_FORBIDDEN	This bot cannot assign [verification icons](https://core.telegram.org/api/bots/verification).
 BROADCAST_FORBIDDEN	This request can't be used in channels.
@@ -31,6 +32,7 @@ CHAT_TYPE_INVALID	The specified chat type is invalid.
 CHAT_WRITE_FORBIDDEN	You don't have rights to send messages in this chat.
 EDIT_BOT_INVITE_FORBIDDEN	Normal users can't edit invites that were created by bots.
 GROUPCALL_ALREADY_STARTED	The groupcall has already started, you can join directly using [phone.joinGroupCall](https://core.telegram.org/method/phone.joinGroupCall).
+GROUPCALL_CHANGE_FORBIDDEN	You cannot change this group call setting.
 GROUPCALL_FORBIDDEN	The group call has already ended.
 INLINE_BOT_REQUIRED	The action must be performed through an inline bot callback.
 LIVE_DISABLED	Story is disabled server-side.
@@ -49,6 +51,7 @@ RIGHT_FORBIDDEN	You don't have enough rights for this action, or you tried to se
 SENSITIVE_CHANGE_FORBIDDEN	You can't change your sensitive content settings at this time.
 STARGIFT_CONVERT_BOT_NOT_ALLOWED	You can't convert this gift to stars.
 TAKEOUT_REQUIRED	The method must be invoked inside a [takeout](https://core.telegram.org/api/takeout) session.
+USER_BANNED_IN_CHANNEL	You're banned from sending messages in supergroups/channels.
 USER_BOT_INVALID	User accounts must provide the `bot` method parameter when calling this method. If there is no such method parameter, this method can only be invoked by bot accounts.
 USER_CHANNELS_TOO_MUCH	One of the users you tried to add is already in too many channels/supergroups.
 USER_DELETED	You can't send this secret message because the other participant deleted their account.
