@@ -10170,6 +10170,7 @@ class Message(Object, Update):
 
         * chat_id
         * message_id
+        * business_connection_id
 
         Parameters:
             disable_notification (``bool``):
@@ -10190,7 +10191,8 @@ class Message(Object, Update):
             chat_id=self.chat.id,
             message_id=self.id,
             disable_notification=disable_notification,
-            both_sides=both_sides
+            both_sides=both_sides,
+            business_connection_id=self.business_connection_id
         )
 
     async def unpin(self) -> bool:
@@ -10198,6 +10200,7 @@ class Message(Object, Update):
 
         * chat_id
         * message_id
+        * business_connection_id
 
         Returns:
             True on success.
@@ -10207,7 +10210,8 @@ class Message(Object, Update):
         """
         return await self._client.unpin_chat_message(
             chat_id=self.chat.id,
-            message_id=self.id
+            message_id=self.id,
+            business_connection_id=self.business_connection_id
         )
 
     async def read(self) -> bool:

@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Union, Optional
+from typing import Optional, Union
 
 import pyrogram
 from pyrogram import raw, types, utils
@@ -29,6 +29,7 @@ class PinChatMessage:
         message_id: int,
         disable_notification: bool = False,
         both_sides: bool = False,
+        business_connection_id: Optional[str] = None,
     ) -> Optional["types.Message"]:
         """Pin a message in a group, channel or your own chat.
         You must be an administrator in the chat for this to work and must have the "can_pin_messages" admin right in
@@ -44,12 +45,16 @@ class PinChatMessage:
                 Identifier of a message to pin.
 
             disable_notification (``bool``, *optional*):
-                Pass True, if it is not necessary to send a notification to all chat members about the new pinned
-                message. Notifications are always disabled in channels.
+                Pass True, if it is not necessary to send a notification to all chat members about the new pinned message.
+                Notifications are always disabled in channels and private chats.
 
             both_sides (``bool``, *optional*):
                 Pass True to pin the message for both sides (you and recipient).
-                Applicable to private chats only. Defaults to False.
+                Applicable to private chats only.
+                Defaults to False.
+
+            business_connection_id (``str``, *optional*):
+                Unique identifier of the business connection on behalf of which the message will be pinned.
 
         Returns:
             :obj:`~pyrogram.types.Message`: On success, the service message is returned.
@@ -69,7 +74,8 @@ class PinChatMessage:
                 id=message_id,
                 silent=disable_notification or None,
                 pm_oneside=not both_sides or None
-            )
+            ),
+            business_connection_id=business_connection_id
         )
 
         messages = await utils.parse_messages(client=self, messages=r)
