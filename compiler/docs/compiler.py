@@ -376,7 +376,8 @@ def pyrogram_api():
             edit_forum_topic
             get_forum_topics
             get_forum_topics_by_id
-            update_color
+            set_chat_accent_color
+            set_chat_profile_accent_color
             set_upgraded_gift_colors
             update_chat_notifications
             toggle_forum_topics
@@ -711,7 +712,6 @@ def pyrogram_api():
             FailedToAddMember
             Folder
             GroupCallMember
-            ChatColor
             FoundContacts
             PrivacyRule
             StoriesStealthMode
@@ -1353,9 +1353,7 @@ def pyrogram_api():
             PhoneNumberCodeType
             PollType
             PrivacyKey
-            ProfileColor
             ProfileTab
-            ReplyColor
             SentCodeType
             StoriesPrivacyRules
             UserStatus

@@ -28,7 +28,6 @@ from .business_working_hours import BusinessWorkingHours
 from .chat import Chat
 from .chat_admin_with_invite_links import ChatAdminWithInviteLinks
 from .chat_administrator_rights import ChatAdministratorRights, ChatPrivileges
-from .chat_color import ChatColor
 from .chat_event import ChatEvent
 from .chat_event_filter import ChatEventFilter
 from .chat_folder_invite_link_info import ChatFolderInviteLinkInfo
@@ -96,7 +95,6 @@ __all__ = [
     "Chat",
     "ChatAdminWithInviteLinks",
     "ChatAdministratorRights",
-    "ChatColor",
     "ChatEvent",
     "ChatEventFilter",
     "ChatFolderInviteLinkInfo",

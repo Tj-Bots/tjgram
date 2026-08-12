@@ -165,11 +165,17 @@ class User(Object, Update):
             The list of reasons why this bot might be unavailable to some users.
             This field is available only in case *is_restricted* is True.
 
-        reply_color (:obj:`~pyrogram.types.ChatColor`, *optional*):
-            Chat reply color.
+        accent_color_id (``int``, *optional*):
+            Accent color for name, and backgrounds of profile photo, reply header, and link preview.
 
-        profile_color (:obj:`~pyrogram.types.ChatColor`, *optional*):
-            Chat profile color.
+        background_custom_emoji_id (``str``, *optional*):
+            Custom emoji identifier of the emoji chosen by the chat for the reply header and link preview background.
+
+        profile_accent_color_id (``int``, *optional*):
+            Accent color for the chat's profile background.
+
+        profile_background_custom_emoji_id (``str``, *optional*):
+            Custom emoji identifier of the emoji chosen by the chat for its profile background.
 
         added_to_attachment_menu (``bool``, *optional*):
             True, if this user added the bot to the attachment menu.
@@ -455,8 +461,10 @@ class User(Object, Update):
         photo: Optional["types.ChatPhoto"] = None,
         public_photo: Optional["types.ChatPhoto"] = None,
         restrictions: Optional[List["types.Restriction"]] = None,
-        reply_color: Optional["types.ChatColor"] = None,
-        profile_color: Optional["types.ChatColor"] = None,
+        accent_color_id: Optional[int] = None,
+        background_custom_emoji_id: Optional[str] = None,
+        profile_accent_color_id: Optional[int] = None,
+        profile_background_custom_emoji_id: Optional[str] = None,
         added_to_attachment_menu: Optional[bool] = None,
         active_users_count: Optional[int] = None,
         inline_need_location: Optional[bool] = None,
@@ -555,8 +563,10 @@ class User(Object, Update):
         self.photo = photo
         self.public_photo = public_photo
         self.restrictions = restrictions
-        self.reply_color = reply_color
-        self.profile_color = profile_color
+        self.accent_color_id = accent_color_id
+        self.background_custom_emoji_id = background_custom_emoji_id
+        self.profile_accent_color_id = profile_accent_color_id
+        self.profile_background_custom_emoji_id = profile_background_custom_emoji_id
         self.added_to_attachment_menu = added_to_attachment_menu
         self.active_users_count = active_users_count
         self.inline_need_location = inline_need_location
@@ -666,6 +676,27 @@ class User(Object, Update):
         if not isinstance(user, raw.types.User):
             return None
 
+        accent_color_id = None
+        background_custom_emoji_id = None
+        profile_accent_color_id = None
+        profile_background_custom_emoji_id = None
+
+        if isinstance(user.color, raw.types.PeerColor):
+            accent_color_id = user.color.color
+            background_custom_emoji_id = str(user.color.background_emoji_id)
+
+        elif isinstance(user.color, raw.types.PeerColorCollectible):
+            accent_color_id = user.color.accent_color
+            background_custom_emoji_id = str(user.color.background_emoji_id)
+
+        if isinstance(user.profile_color, raw.types.PeerColor):
+            profile_accent_color_id = user.profile_color.color
+            profile_background_custom_emoji_id = str(user.profile_color.background_emoji_id)
+
+        elif isinstance(user.profile_color, raw.types.PeerColorCollectible):
+            profile_accent_color_id = user.profile_color.accent_color
+            profile_background_custom_emoji_id = str(user.profile_color.background_emoji_id)
+
         return User(
             id=user.id,
             is_self=user.is_self,
@@ -694,8 +725,10 @@ class User(Object, Update):
             photo=types.ChatPhoto._parse(client, user.photo, user.id, user.access_hash),
             restrictions=types.List([types.Restriction._parse(r) for r in user.restriction_reason])
             or None,
-            reply_color=types.ChatColor._parse(user.color),
-            profile_color=types.ChatColor._parse_profile_color(user.profile_color),
+            accent_color_id=accent_color_id,
+            background_custom_emoji_id=background_custom_emoji_id,
+            profile_accent_color_id=profile_accent_color_id,
+            profile_background_custom_emoji_id=profile_background_custom_emoji_id,
             added_to_attachment_menu=user.attach_menu_enabled,
             active_users_count=user.bot_active_users,
             inline_need_location=user.bot_inline_geo,

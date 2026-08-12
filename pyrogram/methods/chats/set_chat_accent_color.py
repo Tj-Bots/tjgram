@@ -16,18 +16,18 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Union
+from typing import Optional, Union
 
 import pyrogram
-from pyrogram import enums, raw
+from pyrogram import raw
 
 
-class UpdateColor:
-    async def update_color(
+class SetChatAccentColor:
+    async def set_chat_accent_color(
         self: "pyrogram.Client",
         chat_id: Union[int, str],
-        color: Union["enums.ReplyColor", "enums.ProfileColor"],
-        background_emoji_id: int = None
+        accent_color_id: Optional[int] = None,
+        background_custom_emoji_id: Optional[str] = None,
     ) -> bool:
         """Update color
 
@@ -37,42 +37,39 @@ class UpdateColor:
             chat_id (``int`` | ``str``):
                 Unique identifier (int) or username (str) of the target chat.
 
-            color (:obj:`~pyrogram.enums.ReplyColor` | :obj:`~pyrogram.enums.ProfileColor`):
-                Color type.
-                Pass :obj:`~pyrogram.enums.ReplyColor` to set reply color or
-                :obj:`~pyrogram.enums.ProfileColor` to set profile color.
+            accent_color_id (``int``, *optional*):
+                Identifier of the accent color to use.
 
-            background_emoji_id (``int``, *optional*):
-                Unique identifier of the custom emoji.
+            background_custom_emoji_id (``str``, *optional*):
+                Identifier of a custom emoji to be shown on the reply header and link preview background.
 
         Returns:
             ``bool``: On success, True is returned.
-
-        Example:
-            .. code-block:: python
-
-                await app.update_color(chat_id, enums.ReplyColor.RED)
         """
         peer = await self.resolve_peer(chat_id)
+
+        if background_custom_emoji_id is not None:
+            background_custom_emoji_id = int(background_custom_emoji_id)
 
         if isinstance(peer, raw.types.InputPeerSelf):
             r = await self.invoke(
                 raw.functions.account.UpdateColor(
-                    for_profile=isinstance(color, enums.ProfileColor),
+                    for_profile=False,
                     color=raw.types.PeerColor(
-                        color=color.value,
-                        background_emoji_id=background_emoji_id
-                    )
+                        color=accent_color_id, background_emoji_id=background_custom_emoji_id
+                    ),
                 )
             )
-        else:
+        elif isinstance(peer, raw.types.InputPeerChannel):
             r = await self.invoke(
                 raw.functions.channels.UpdateColor(
                     channel=peer,
-                    for_profile=isinstance(color, enums.ProfileColor),
-                    color=color.value,
-                    background_emoji_id=background_emoji_id
+                    for_profile=False,
+                    color=accent_color_id,
+                    background_emoji_id=background_custom_emoji_id,
                 )
             )
+        else:
+            raise ValueError("Invalid peer provided")
 
         return bool(r)

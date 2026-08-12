@@ -252,11 +252,17 @@ class Chat(Object):
         level (``int``, *optional*):
             Channel boosts level.
 
-        reply_color (:obj:`~pyrogram.types.ChatColor`, *optional*):
-            Chat reply color.
+        accent_color_id (``int``, *optional*):
+            Accent color for name, and backgrounds of profile photo, reply header, and link preview.
 
-        profile_color (:obj:`~pyrogram.types.ChatColor`, *optional*):
-            Chat profile color.
+        background_custom_emoji_id (``str``, *optional*):
+            Custom emoji identifier of the emoji chosen by the chat for the reply header and link preview background.
+
+        profile_accent_color_id (``int``, *optional*):
+            Accent color for the chat's profile background.
+
+        profile_background_custom_emoji_id (``str``, *optional*):
+            Custom emoji identifier of the emoji chosen by the chat for its profile background.
 
         business_away_message (:obj:`~pyrogram.types.BusinessMessage`, *optional*):
             For private chats with business accounts, the away message of the business.
@@ -612,8 +618,10 @@ class Chat(Object):
         send_as_chat: Optional["types.Chat"] = None,
         available_reactions: Optional["types.ChatReactions"] = None,
         level: Optional[int] = None,
-        reply_color: Optional["types.ChatColor"] = None,
-        profile_color: Optional["types.ChatColor"] = None,
+        accent_color_id: Optional[int] = None,
+        background_custom_emoji_id: Optional[str] = None,
+        profile_accent_color_id: Optional[int] = None,
+        profile_background_custom_emoji_id: Optional[str] = None,
         business_away_message: Optional["types.BusinessMessage"] = None,
         business_greeting_message: Optional["types.BusinessMessage"] = None,
         business_work_hours: Optional["types.BusinessMessage"] = None,
@@ -758,8 +766,10 @@ class Chat(Object):
         self.send_as_chat = send_as_chat
         self.available_reactions = available_reactions
         self.level = level
-        self.reply_color = reply_color
-        self.profile_color = profile_color
+        self.accent_color_id = accent_color_id
+        self.background_custom_emoji_id = background_custom_emoji_id
+        self.profile_accent_color_id = profile_accent_color_id
+        self.profile_background_custom_emoji_id = profile_background_custom_emoji_id
         self.business_away_message = business_away_message
         self.business_greeting_message = business_greeting_message
         self.business_work_hours = business_work_hours
@@ -872,6 +882,27 @@ class Chat(Object):
 
         peer_id = user.id
 
+        accent_color_id = None
+        background_custom_emoji_id = None
+        profile_accent_color_id = None
+        profile_background_custom_emoji_id = None
+
+        if isinstance(user.color, raw.types.PeerColor):
+            accent_color_id = user.color.color
+            background_custom_emoji_id = str(user.color.background_emoji_id)
+
+        elif isinstance(user.color, raw.types.PeerColorCollectible):
+            accent_color_id = user.color.accent_color
+            background_custom_emoji_id = str(user.color.background_emoji_id)
+
+        if isinstance(user.profile_color, raw.types.PeerColor):
+            profile_accent_color_id = user.profile_color.color
+            profile_background_custom_emoji_id = str(user.profile_color.background_emoji_id)
+
+        elif isinstance(user.profile_color, raw.types.PeerColorCollectible):
+            profile_accent_color_id = user.profile_color.accent_color
+            profile_background_custom_emoji_id = str(user.profile_color.background_emoji_id)
+
         return Chat(
             id=peer_id,
             type=enums.ChatType.BOT if user.bot else enums.ChatType.PRIVATE,
@@ -890,8 +921,10 @@ class Chat(Object):
             or None,
             dc_id=getattr(getattr(user, "photo", None), "dc_id", None),
             emoji_status=types.EmojiStatus._parse(client, user.emoji_status),
-            reply_color=types.ChatColor._parse(user.color),
-            profile_color=types.ChatColor._parse_profile_color(user.profile_color),
+            accent_color_id=accent_color_id,
+            background_custom_emoji_id=background_custom_emoji_id,
+            profile_accent_color_id=profile_accent_color_id,
+            profile_background_custom_emoji_id=profile_background_custom_emoji_id,
             paid_message_star_count=user.send_paid_messages_stars,
             can_manage_bots=user.bot_can_manage_bots,
             community_id=utils.get_channel_id(user.linked_community_id) if user.linked_community_id is not None else None,
@@ -974,6 +1007,27 @@ class Chat(Object):
         elif channel.megagroup:
             chat_type = enums.ChatType.SUPERGROUP
 
+        accent_color_id = None
+        background_custom_emoji_id = None
+        profile_accent_color_id = None
+        profile_background_custom_emoji_id = None
+
+        if isinstance(channel.color, raw.types.PeerColor):
+            accent_color_id = channel.color.color
+            background_custom_emoji_id = str(channel.color.background_emoji_id)
+
+        elif isinstance(channel.color, raw.types.PeerColorCollectible):
+            accent_color_id = channel.color.accent_color
+            background_custom_emoji_id = str(channel.color.background_emoji_id)
+
+        if isinstance(channel.profile_color, raw.types.PeerColor):
+            profile_accent_color_id = channel.profile_color.color
+            profile_background_custom_emoji_id = str(channel.profile_color.background_emoji_id)
+
+        elif isinstance(channel.profile_color, raw.types.PeerColorCollectible):
+            profile_accent_color_id = channel.profile_color.accent_color
+            profile_background_custom_emoji_id = str(channel.profile_color.background_emoji_id)
+
         return Chat(
             id=peer_id,
             type=chat_type,
@@ -1005,8 +1059,10 @@ class Chat(Object):
             emoji_status=types.EmojiStatus._parse(client, channel.emoji_status),
             has_protected_content=channel.noforwards,
             level=channel.level,
-            reply_color=types.ChatColor._parse(channel.color),
-            profile_color=types.ChatColor._parse(channel.profile_color),
+            accent_color_id=accent_color_id,
+            background_custom_emoji_id=background_custom_emoji_id,
+            profile_accent_color_id=profile_accent_color_id,
+            profile_background_custom_emoji_id=profile_background_custom_emoji_id,
             subscription_until_date=utils.timestamp_to_datetime(channel.subscription_until_date),
             paid_message_star_count=channel.send_paid_messages_stars,
             has_automatic_translation=channel.autotranslation,
@@ -1407,7 +1463,7 @@ class Chat(Object):
             or None,
             description=chat_invite.about or None,
             join_by_request=chat_invite.request_needed,
-            profile_color=types.ChatColor._parse(chat_invite.color),
+            accent_color_id=chat_invite.color,
             raw=chat_invite,
             client=client,
         )
