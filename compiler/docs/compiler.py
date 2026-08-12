@@ -1152,6 +1152,8 @@ def pyrogram_api():
             Message.answer_inline_bot_result
             Message.reply_checklist
             Message.answer_checklist
+            Message.reply_rich
+            Message.answer_rich
             Message.edit_text
             Message.edit
             Message.edit_caption

@@ -9084,6 +9084,169 @@ class Message(Object, Update):
             reply_markup=reply_markup,
         )
 
+    async def reply_rich(
+        self,
+        rich_message: "types.InputRichMessage",
+        direct_messages_topic_id: Optional[int] = None,
+        disable_notification: Optional[bool] = None,
+        protect_content: Optional[bool] = None,
+        allow_paid_broadcast: Optional[bool] = None,
+        effect_id: Optional[int] = None,
+        suggested_post_parameters: Optional["types.SuggestedPostParameters"] = None,
+        reply_markup: Optional[
+            Union[
+                "types.InlineKeyboardMarkup",
+                "types.ReplyKeyboardMarkup",
+                "types.ReplyKeyboardRemove",
+                "types.ForceReply"
+            ]
+        ] = None,
+    ) -> "Message":
+        """Shortcut for method :obj:`~pyrogram.Client.send_rich_message` will automatically fill method attributes:
+
+        * chat_id
+        * message_thread_id
+        * business_connection_id
+        * reply_parameters
+        * receiver_user_id
+
+        Parameters:
+            rich_message (:obj:`~pyrogram.types.InputChecklist`):
+                The message to be sent.
+
+            direct_messages_topic_id (``int``, *optional*):
+                Unique identifier of the topic in a channel direct messages chat administered by the current user.
+                For direct chats only.only.
+
+            disable_notification (``bool``, *optional*):
+                Sends the message silently.
+                Users will receive a notification with no sound.
+
+            protect_content (``bool``, *optional*):
+                Protects the contents of the sent message from forwarding and saving.
+
+            allow_paid_broadcast (``bool``, *optional*):
+                If True, you will be allowed to send up to 1000 messages per second.
+                Ignoring broadcasting limits for a fee of 0.1 Telegram Stars per message.
+                The relevant Stars will be withdrawn from the bot's balance.
+                For bots only.
+
+            effect_id (``int``, *optional*):
+                Unique identifier of the message effect.
+                For private chats only.
+
+            suggested_post_parameters (:obj:`~pyrogram.types.SuggestedPostParameters`, *optional*):
+                Information about the suggested post.
+
+            reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
+                Additional interface options. An object for an inline keyboard, custom reply keyboard,
+                instructions to remove reply keyboard or to force a reply from the user.
+
+        Returns:
+            On success, the sent :obj:`~pyrogram.types.Message` is returned.
+
+        Raises:
+            RPCError: In case of a Telegram RPC error.
+        """
+        if self.ephemeral_message_id:
+            reply_parameters = types.ReplyParameters(
+                ephemeral_message_id=self.ephemeral_message_id
+            )
+        else:
+            reply_parameters = types.ReplyParameters(message_id=self.id)
+
+        return await self._client.send_rich_message(
+            chat_id=self.chat.id,
+            rich_message=rich_message,
+            direct_messages_topic_id=direct_messages_topic_id or self.direct_messages_topic_id,
+            disable_notification=disable_notification,
+            message_thread_id=self.message_thread_id,
+            protect_content=protect_content,
+            allow_paid_broadcast=allow_paid_broadcast,
+            effect_id=effect_id,
+            suggested_post_parameters=suggested_post_parameters,
+            reply_parameters=reply_parameters,
+            receiver_user_id=self.from_user.id if self.ephemeral_message_id else None,
+            reply_markup=reply_markup,
+        )
+
+    async def answer_rich(
+        self,
+        rich_message: "types.InputRichMessage",
+        direct_messages_topic_id: Optional[int] = None,
+        disable_notification: Optional[bool] = None,
+        protect_content: Optional[bool] = None,
+        allow_paid_broadcast: Optional[bool] = None,
+        effect_id: Optional[int] = None,
+        suggested_post_parameters: Optional["types.SuggestedPostParameters"] = None,
+        reply_markup: Optional[
+            Union[
+                "types.InlineKeyboardMarkup",
+                "types.ReplyKeyboardMarkup",
+                "types.ReplyKeyboardRemove",
+                "types.ForceReply"
+            ]
+        ] = None,
+    ) -> "Message":
+        """Shortcut for method :obj:`~pyrogram.Client.send_rich_message` will automatically fill method attributes:
+
+        * chat_id
+        * message_thread_id
+        * business_connection_id
+        * receiver_user_id
+
+        Parameters:
+            rich_message (:obj:`~pyrogram.types.InputChecklist`):
+                The message to be sent.
+
+            direct_messages_topic_id (``int``, *optional*):
+                Unique identifier of the topic in a channel direct messages chat administered by the current user.
+                For direct chats only.only.
+
+            disable_notification (``bool``, *optional*):
+                Sends the message silently.
+                Users will receive a notification with no sound.
+
+            protect_content (``bool``, *optional*):
+                Protects the contents of the sent message from forwarding and saving.
+
+            allow_paid_broadcast (``bool``, *optional*):
+                If True, you will be allowed to send up to 1000 messages per second.
+                Ignoring broadcasting limits for a fee of 0.1 Telegram Stars per message.
+                The relevant Stars will be withdrawn from the bot's balance.
+                For bots only.
+
+            effect_id (``int``, *optional*):
+                Unique identifier of the message effect.
+                For private chats only.
+
+            suggested_post_parameters (:obj:`~pyrogram.types.SuggestedPostParameters`, *optional*):
+                Information about the suggested post.
+
+            reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
+                Additional interface options. An object for an inline keyboard, custom reply keyboard,
+                instructions to remove reply keyboard or to force a reply from the user.
+
+        Returns:
+            On success, the sent :obj:`~pyrogram.types.Message` is returned.
+
+        Raises:
+            RPCError: In case of a Telegram RPC error.
+        """
+        return await self._client.send_rich_message(
+            chat_id=self.chat.id,
+            rich_message=rich_message,
+            direct_messages_topic_id=direct_messages_topic_id or self.direct_messages_topic_id,
+            disable_notification=disable_notification,
+            message_thread_id=self.message_thread_id,
+            protect_content=protect_content,
+            allow_paid_broadcast=allow_paid_broadcast,
+            effect_id=effect_id,
+            suggested_post_parameters=suggested_post_parameters,
+            receiver_user_id=self.from_user.id if self.ephemeral_message_id else None,
+            reply_markup=reply_markup,
+        )
+
     async def edit_text(
         self,
         text: str,
