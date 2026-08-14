@@ -49,6 +49,60 @@ class DownloadMedia:
             "types.PaidMediaPreview",
         ],
         file_name: str = DEFAULT_DOWNLOAD_DIR,
+        in_memory: Literal[False] = False,
+        block: Literal[True] = True,
+        progress: Optional[Callable] = None,
+        progress_args: tuple = (),
+    ) -> Union[str, List[str], None]: ...
+
+    @overload
+    async def download_media(
+        self: "pyrogram.Client",
+        message: Union[
+            str,
+            "types.Message",
+            "types.Story",
+            "types.Audio",
+            "types.Document",
+            "types.Photo",
+            "types.Sticker",
+            "types.Animation",
+            "types.Video",
+            "types.Voice",
+            "types.VideoNote",
+            "types.PaidMediaInfo",
+            "types.Thumbnail",
+            "types.StrippedThumbnail",
+            "types.PaidMediaPreview",
+        ],
+        file_name: str = DEFAULT_DOWNLOAD_DIR,
+        in_memory: Literal[True] = True,
+        block: Literal[True] = True,
+        progress: Optional[Callable] = None,
+        progress_args: tuple = (),
+    ) -> Union[BinaryIO, List[BinaryIO], None]: ...
+
+    @overload
+    async def download_media(
+        self: "pyrogram.Client",
+        message: Union[
+            str,
+            "types.Message",
+            "types.Story",
+            "types.Audio",
+            "types.Document",
+            "types.Photo",
+            "types.Sticker",
+            "types.Animation",
+            "types.Video",
+            "types.Voice",
+            "types.VideoNote",
+            "types.PaidMediaInfo",
+            "types.Thumbnail",
+            "types.StrippedThumbnail",
+            "types.PaidMediaPreview",
+        ],
+        file_name: str = DEFAULT_DOWNLOAD_DIR,
         *,
         in_memory: bool = False,
         block: Literal[False],
@@ -76,13 +130,12 @@ class DownloadMedia:
             "types.StrippedThumbnail",
             "types.PaidMediaPreview",
         ],
-        file_name: str = DEFAULT_DOWNLOAD_DIR,
-        *,
-        in_memory: Literal[True],
-        block: bool = True,
+        file_name: str,
+        in_memory: bool,
+        block: Literal[False],
         progress: Optional[Callable] = None,
         progress_args: tuple = (),
-    ) -> Union[BinaryIO, List[BinaryIO]]: ...
+    ) -> None: ...
 
     @overload
     async def download_media(
@@ -105,13 +158,11 @@ class DownloadMedia:
             "types.PaidMediaPreview",
         ],
         file_name: str = DEFAULT_DOWNLOAD_DIR,
-        *,
-        in_memory: Literal[False],
+        in_memory: bool = False,
         block: bool = True,
         progress: Optional[Callable] = None,
         progress_args: tuple = (),
-    ) -> Union[str, List[str]]:
-        ...
+    ) -> Union[str, BinaryIO, List[str], List[BinaryIO], None]: ...
 
     async def download_media(
         self: "pyrogram.Client",
@@ -185,11 +236,11 @@ class DownloadMedia:
                 You can either keep ``*args`` or add every single extra argument in your function signature.
 
         Returns:
-            ``str`` | ``None`` | ``BinaryIO`` | ``List[str]`` | ``List[BinaryIO]``: On success, the absolute path of the downloaded file is returned,
-            otherwise, in case the download failed or was deliberately stopped with
+            ``str`` | ``BinaryIO`` | ``List[str]`` | ``List[BinaryIO]`` | ``None``: On success, the absolute path of the
+            downloaded file is returned. In case ``in_memory=True``, a binary file-like object with its attribute
+            ".name" set is returned. If the message contains multiple media (purchased paid media), a list of paths or
+            binary file-like objects is returned. In case the download failed or was deliberately stopped with
             :meth:`~pyrogram.Client.stop_transmission`, None is returned.
-            Otherwise, in case ``in_memory=True``, a binary file-like object with its attribute ".name" set is returned.
-            If the message contains multiple media (purchased paid media), a list of paths or binary file-like objects is returned.
 
         Raises:
             ValueError: if the message doesn't contain any downloadable media

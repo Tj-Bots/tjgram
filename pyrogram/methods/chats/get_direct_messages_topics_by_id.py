@@ -17,7 +17,7 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-from typing import Iterable, List, Union
+from typing import Iterable, List, Optional, Union, overload
 
 import pyrogram
 from pyrogram import raw, types
@@ -26,11 +26,25 @@ log = logging.getLogger(__name__)
 
 
 class GetDirectMessagesTopicsByID:
+    @overload
+    async def get_direct_messages_topics_by_id(
+        self: "pyrogram.Client",
+        chat_id: Union[int, str],
+        topic_ids: int
+    ) -> Optional["types.DirectMessagesTopic"]: ...
+
+    @overload
+    async def get_direct_messages_topics_by_id(
+        self: "pyrogram.Client",
+        chat_id: Union[int, str],
+        topic_ids: Iterable[int]
+    ) -> List["types.DirectMessagesTopic"]: ...
+
     async def get_direct_messages_topics_by_id(
         self: "pyrogram.Client",
         chat_id: Union[int, str],
         topic_ids: Union[int, Iterable[int]]
-    ) -> Union["types.DirectMessagesTopic", List["types.DirectMessagesTopic"]]:
+    ) -> Optional[Union["types.DirectMessagesTopic", List["types.DirectMessagesTopic"]]]:
         """Get one or more direct message topic from a chat by using topic identifiers.
 
         .. include:: /_includes/usable-by/users.rst
@@ -44,8 +58,9 @@ class GetDirectMessagesTopicsByID:
                 topic themselves.
 
         Returns:
-            :obj:`~pyrogram.types.DirectMessagesTopic` | List of :obj:`~pyrogram.types.DirectMessagesTopic`: In case *topic_ids* was not
-            a list, a single topic is returned, otherwise a list of topics is returned.
+            :obj:`~pyrogram.types.DirectMessagesTopic` | List of :obj:`~pyrogram.types.DirectMessagesTopic` | ``None``:
+            In case *topic_ids* was not a list, a single topic is returned, otherwise a list of topics is returned. In
+            case *topic_ids* was not a list and the chat has no topic with that identifier, None is returned.
 
         Example:
             .. code-block:: python
@@ -74,4 +89,8 @@ class GetDirectMessagesTopicsByID:
         for i in r.dialogs:
             topics.append(types.DirectMessagesTopic._parse(client=self, topic=i, users=users, chats=chats))
 
+        # NOTE: A topic exists only once its peer has written to the chat, and asking for a peer
+        #       without one answers with an empty `dialogs` vector rather than an error:
+        #
+        #       await app.get_direct_messages_topics_by_id(chat_id, user_id)  # -> None
         return topics if is_iterable else topics[0] if topics else None

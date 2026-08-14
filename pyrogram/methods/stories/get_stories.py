@@ -17,13 +17,27 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
-from typing import Iterable, List, Optional, Union
+from typing import Iterable, List, Optional, Union, overload
 
 import pyrogram
 from pyrogram import raw, types
 
 
 class GetStories:
+    @overload
+    async def get_stories(
+        self: "pyrogram.Client",
+        chat_id: Optional[Union[int, str]] = None,
+        story_ids: Optional[Union[int, str]] = None,
+    ) -> Optional["types.Story"]: ...
+
+    @overload
+    async def get_stories(
+        self: "pyrogram.Client",
+        chat_id: Optional[Union[int, str]],
+        story_ids: Iterable[int],
+    ) -> List["types.Story"]: ...
+
     async def get_stories(
         self: "pyrogram.Client",
         chat_id: Optional[Union[int, str]] = None,
@@ -44,8 +58,9 @@ class GetStories:
                 or link to get the content of the story themselves.
 
         Returns:
-            :obj:`~pyrogram.types.Story` | List of :obj:`~pyrogram.types.Story`: In case *story_ids* was not
-            a list, a single story is returned, otherwise a list of stories is returned.
+            :obj:`~pyrogram.types.Story` | List of :obj:`~pyrogram.types.Story` | ``None``: In case *story_ids* was not
+            a list, a single story is returned, otherwise a list of stories is returned. In case *story_ids* was not a
+            list and the story does not exist, None is returned.
 
         Example:
             .. code-block:: python

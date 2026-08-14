@@ -17,7 +17,7 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-from typing import Iterable, List, Union
+from typing import Iterable, List, Union, overload
 
 import pyrogram
 from pyrogram import raw, types
@@ -26,6 +26,20 @@ log = logging.getLogger(__name__)
 
 
 class GetForumTopicsByID:
+    @overload
+    async def get_forum_topics_by_id(
+        self: "pyrogram.Client",
+        chat_id: Union[int, str],
+        topic_ids: int
+    ) -> "types.ForumTopic": ...
+
+    @overload
+    async def get_forum_topics_by_id(
+        self: "pyrogram.Client",
+        chat_id: Union[int, str],
+        topic_ids: Iterable[int]
+    ) -> List["types.ForumTopic"]: ...
+
     async def get_forum_topics_by_id(
         self: "pyrogram.Client",
         chat_id: Union[int, str],
@@ -77,4 +91,5 @@ class GetForumTopicsByID:
         for i in r.topics:
             topics.append(types.ForumTopic._parse(self, i, users=users, chats=chats))
 
-        return topics if is_iterable else topics[0] if topics else None
+        # A topic that does not exist comes back as `forumTopicDeleted`, never as a missing entry.
+        return topics if is_iterable else topics[0]
