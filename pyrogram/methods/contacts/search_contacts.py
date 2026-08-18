@@ -56,4 +56,4 @@ class SearchContacts:
             )
         )
 
-        return types.FoundContacts._parse(self, r)
+        return await types.FoundContacts._parse(self, r)

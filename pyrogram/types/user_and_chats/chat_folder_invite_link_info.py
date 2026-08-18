@@ -55,7 +55,7 @@ class ChatFolderInviteLinkInfo(Object):
         client: "pyrogram.Client", invite: "raw.base.chatlists.ChatlistInvite"
     ) -> "ChatFolderInviteLinkInfo":
         if isinstance(invite, raw.types.chatlists.ChatlistInvite):
-            title = types.FormattedText._parse(client, invite.title)
+            title = await types.FormattedText._parse(client, invite.title)
 
             return ChatFolderInviteLinkInfo(
                 chat_folder_info=types.Folder(
@@ -66,7 +66,7 @@ class ChatFolderInviteLinkInfo(Object):
                     client=client,
                 ),
                 missing_chats=types.List(
-                    [types.Chat._parse_chat(client, chat) for chat in invite.chats]
+                    [await types.Chat._parse_chat(client, chat) for chat in invite.chats]
                 )
                 or None,
             )
@@ -81,14 +81,14 @@ class ChatFolderInviteLinkInfo(Object):
                 ),
                 missing_chats=types.List(
                     [
-                        types.Chat._parse_chat(client, chats.get(utils.get_raw_peer_id(i)))
+                        await types.Chat._parse_chat(client, chats.get(utils.get_raw_peer_id(i)))
                         for i in invite.missing_peers
                     ]
                 )
                 or None,
                 added_chats=types.List(
                     [
-                        types.Chat._parse_chat(client, chats.get(utils.get_raw_peer_id(i)))
+                        await types.Chat._parse_chat(client, chats.get(utils.get_raw_peer_id(i)))
                         for i in invite.already_peers
                     ]
                 )

@@ -49,7 +49,7 @@ class ProximityAlertTriggered(Object):
         self.distance = distance
 
     @staticmethod
-    def _parse(
+    async def _parse(
         client: "pyrogram.Client",
         action: "raw.types.MessageActionGeoProximityReached",
         users: Dict[int, "raw.base.User"],
@@ -59,7 +59,7 @@ class ProximityAlertTriggered(Object):
         to_id = utils.get_raw_peer_id(action.to_id)
 
         return ProximityAlertTriggered(
-            traveler=types.Chat._parse_chat(client, users.get(from_id) or chats.get(from_id)),
-            watcher=types.Chat._parse_chat(client, users.get(to_id) or chats.get(to_id)),
+            traveler=await types.Chat._parse_chat(client, users.get(from_id) or chats.get(from_id)),
+            watcher=await types.Chat._parse_chat(client, users.get(to_id) or chats.get(to_id)),
             distance=action.distance
         )

@@ -61,7 +61,7 @@ class MessageReactionCountUpdated(Object, Update):
         self.reactions = reactions
 
     @staticmethod
-    def _parse(
+    async def _parse(
         client: "pyrogram.Client",
         update: "raw.types.UpdateBotMessageReactions",
         users: Dict[int, "raw.types.User"],
@@ -71,9 +71,9 @@ class MessageReactionCountUpdated(Object, Update):
         raw_peer_id = utils.get_raw_peer_id(update.peer)
 
         if peer_id > 0:
-            chat = types.Chat._parse_user_chat(client, users[raw_peer_id])
+            chat = await types.Chat._parse_user_chat(client, users[raw_peer_id])
         else:
-            chat = types.Chat._parse_chat(client, chats[raw_peer_id])
+            chat = await types.Chat._parse_chat(client, chats[raw_peer_id])
 
         return MessageReactionCountUpdated(
             client=client,

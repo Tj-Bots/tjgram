@@ -88,7 +88,7 @@ class GetTopChats:
                 for top_peer in cat.peers:
                     peer_id = utils.get_raw_peer_id(top_peer.peer)
 
-                    chats.append(types.Chat._parse_chat(self, users.get(peer_id) or chats.get(peer_id)))
+                    chats.append(await types.Chat._parse_chat(self, users.get(peer_id) or chats.get(peer_id)))
 
             if not chats:
                 return

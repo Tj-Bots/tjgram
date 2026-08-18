@@ -64,9 +64,9 @@ class StoryView(Object):
         self.reaction = reaction
 
     @staticmethod
-    def _parse(client, view: "raw.types.StoryView", users: List["raw.types.User"]) -> "StoryView":
+    async def _parse(client, view: "raw.types.StoryView", users: List["raw.types.User"]) -> "StoryView":
         return StoryView(
-            from_user=types.User._parse(client, users[view.user_id]),
+            from_user=await types.User._parse(client, users[view.user_id]),
             date=utils.timestamp_to_datetime(view.date),
             is_blocked=getattr(view, "blocked", None),
             is_blocked_my_stories_from=getattr(view, "blocked_my_stories_from", None),

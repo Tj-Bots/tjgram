@@ -75,7 +75,7 @@ class Checklist(Object):
         self.can_mark_tasks_as_done = can_mark_tasks_as_done
 
     @staticmethod
-    def _parse(
+    async def _parse(
         client: "pyrogram.Client",
         checklist: "raw.types.MessageMediaToDo",
         users: Dict[int, "raw.base.User"],
@@ -87,7 +87,7 @@ class Checklist(Object):
 
         for task in checklist.todo.list:
             checklist_tasks.append(
-                types.ChecklistTask._parse(
+                await types.ChecklistTask._parse(
                     client,
                     task,
                     completions.get(task.id),
@@ -97,7 +97,7 @@ class Checklist(Object):
             )
 
         title, entities = (
-            utils.parse_text_with_entities(client, checklist.todo.title, users)
+            await utils.parse_text_with_entities(client, checklist.todo.title, users)
         ).values()
 
         return Checklist(

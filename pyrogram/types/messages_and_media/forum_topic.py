@@ -122,7 +122,7 @@ class ForumTopic(Object):
         self.is_deleted = is_deleted
 
     @staticmethod
-    def _parse(client: "pyrogram.Client", forum_topic: "raw.types.ForumTopic", messages: dict = {},  users: dict = {}, chats: dict = {}) -> "ForumTopic":
+    async def _parse(client: "pyrogram.Client", forum_topic: "raw.types.ForumTopic", messages: dict = {},  users: dict = {}, chats: dict = {}) -> "ForumTopic":
         if not forum_topic:
             return None
 
@@ -137,9 +137,9 @@ class ForumTopic(Object):
             peer_id = utils.get_raw_peer_id(peer)
 
             if isinstance(peer, raw.types.PeerUser):
-                creator = types.Chat._parse_user_chat(client, users[peer_id])
+                creator = await types.Chat._parse_user_chat(client, users[peer_id])
             else:
-                creator = types.Chat._parse_channel_chat(client, chats[peer_id])
+                creator = await types.Chat._parse_channel_chat(client, chats[peer_id])
 
         return ForumTopic(
             id=forum_topic.id,

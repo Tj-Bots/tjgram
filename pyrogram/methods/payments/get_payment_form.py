@@ -63,4 +63,4 @@ class GetPaymentForm:
             )
         )
 
-        return types.PaymentForm._parse(self, r)
+        return await types.PaymentForm._parse(self, r)

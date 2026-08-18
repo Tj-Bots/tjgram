@@ -63,18 +63,18 @@ class ChatJoiner(Object):
         self.approved_by = approved_by
 
     @staticmethod
-    def _parse(
+    async def _parse(
         client: "pyrogram.Client",
         joiner: "raw.base.ChatInviteImporter",
         users: Dict[int, "raw.base.User"],
     ) -> "ChatJoiner":
         return ChatJoiner(
-            user=types.User._parse(client, users[joiner.user_id]),
+            user=await types.User._parse(client, users[joiner.user_id]),
             date=utils.timestamp_to_datetime(joiner.date),
             pending=joiner.requested,
             bio=joiner.about,
             approved_by=(
-                types.User._parse(client, users[joiner.approved_by])
+                await types.User._parse(client, users[joiner.approved_by])
                 if joiner.approved_by
                 else None
             ),

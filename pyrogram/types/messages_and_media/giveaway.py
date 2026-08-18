@@ -87,13 +87,13 @@ class Giveaway(Object):
         self.stars = stars
 
     @staticmethod
-    def _parse(
+    async def _parse(
         client,
         giveaway: "raw.types.MessageMediaGiveaway",
         chats: dict
     ) -> "Giveaway":
         return Giveaway(
-            chats=types.List(types.Chat._parse_channel_chat(client, chats.get(i)) for i in giveaway.channels),
+            chats=types.List([await types.Chat._parse_channel_chat(client, chats.get(i)) for i in giveaway.channels]),
             quantity=giveaway.quantity,
             months=giveaway.months,
             until_date=utils.timestamp_to_datetime(giveaway.until_date),

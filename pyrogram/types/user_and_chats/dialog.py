@@ -104,9 +104,9 @@ class Dialog(Object):
         self.raw = raw
 
     @staticmethod
-    def _parse(client, dialog: "raw.types.Dialog", messages, users, chats) -> "Dialog":
+    async def _parse(client, dialog: "raw.types.Dialog", messages, users, chats) -> "Dialog":
         return Dialog(
-            chat=types.Chat._parse_dialog(client, dialog.peer, users, chats),
+            chat=await types.Chat._parse_dialog(client, dialog.peer, users, chats),
             top_message=messages.get(utils.get_peer_id(dialog.peer)),
             last_read_inbox_message_id=dialog.read_inbox_max_id,
             last_read_outbox_message_id=dialog.read_outbox_max_id,

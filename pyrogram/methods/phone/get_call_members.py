@@ -85,7 +85,7 @@ class GetCallMembers:
             users = {u.id: u for u in r.users}
             chats = {c.id: c for c in r.chats}
             members = [
-                types.GroupCallMember._parse(self, member, users, chats)
+                await types.GroupCallMember._parse(self, member, users, chats)
                 for member in r.participants
             ]
 

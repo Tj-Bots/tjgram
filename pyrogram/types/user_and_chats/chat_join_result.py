@@ -43,13 +43,13 @@ class ChatJoinResult(Object):
     ) -> "ChatJoinResult":
         if isinstance(result, raw.types.messages.ChatInviteJoinResultOk):
             return ChatJoinResultSuccess(
-                chat=types.Chat._parse_chat(client, result.updates.chats[0])
+                chat=await types.Chat._parse_chat(client, result.updates.chats[0])
             )
         if isinstance(result, raw.types.messages.ChatInviteJoinResultWebView):
             users = {i.id: i for i in result.users}
 
             return ChatJoinResultGuardBotApprovalRequired(
-                bot=types.User._parse(client, users[result.bot_id]),
+                bot=await types.User._parse(client, users[result.bot_id]),
                 url=result.webview.url,
                 query_id=str(result.webview.query_id) if result.webview.query_id else None
             )

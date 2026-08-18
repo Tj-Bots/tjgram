@@ -72,7 +72,7 @@ class ShippingQuery(Object, Update):
 
         return ShippingQuery(
             id=str(shipping_query.query_id),
-            from_user=types.User._parse(client, users[shipping_query.user_id]),
+            from_user=await types.User._parse(client, users[shipping_query.user_id]),
             invoice_payload=payload,
             shipping_address=types.ShippingAddress._parse(shipping_query.shipping_address),
             client=client

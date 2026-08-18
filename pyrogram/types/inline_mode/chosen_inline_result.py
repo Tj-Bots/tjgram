@@ -78,10 +78,10 @@ class ChosenInlineResult(Object, Update):
         self.matches = matches
 
     @staticmethod
-    def _parse(client, chosen_inline_result: raw.types.UpdateBotInlineSend, users) -> "ChosenInlineResult":
+    async def _parse(client, chosen_inline_result: raw.types.UpdateBotInlineSend, users) -> "ChosenInlineResult":
         return ChosenInlineResult(
             result_id=str(chosen_inline_result.id),
-            from_user=types.User._parse(client, users[chosen_inline_result.user_id]),
+            from_user=await types.User._parse(client, users[chosen_inline_result.user_id]),
             query=chosen_inline_result.query,
             location=types.Location(
                 longitude=chosen_inline_result.geo.long,

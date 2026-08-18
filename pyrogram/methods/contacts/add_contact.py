@@ -82,4 +82,4 @@ class AddContact:
             )
         )
 
-        return types.User._parse(self, r.users[0])
+        return await types.User._parse(self, r.users[0])

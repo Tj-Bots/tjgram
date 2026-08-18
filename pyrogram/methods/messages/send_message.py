@@ -371,7 +371,7 @@ class SendMessage:
                 outgoing=r.out,
                 reply_markup=reply_markup,
                 entities=[
-                    types.MessageEntity._parse(None, entity, {})
+                    await types.MessageEntity._parse(None, entity, {})
                     for entity in entities
                 ] if entities else None,
                 client=self

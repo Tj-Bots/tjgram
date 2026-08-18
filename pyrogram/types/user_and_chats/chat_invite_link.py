@@ -100,7 +100,7 @@ class ChatInviteLink(Object):
         self.pending_join_request_count = pending_join_request_count
 
     @staticmethod
-    def _parse(
+    async def _parse(
         client: "pyrogram.Client",
         invite: "raw.base.ExportedChatInvite",
         users: Optional[Dict[int, "raw.types.User"]] = None
@@ -109,7 +109,7 @@ class ChatInviteLink(Object):
             return None
 
         creator = (
-            types.User._parse(client, users[invite.admin_id])
+            await types.User._parse(client, users[invite.admin_id])
             if users is not None
             else None
         )

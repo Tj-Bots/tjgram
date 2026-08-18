@@ -43,8 +43,8 @@ class PurchasedPaidMedia(Object):
         self.payload = payload
 
     @staticmethod
-    def _parse(client, purchased_media: "raw.types.UpdateBotPurchasedPaidMedia", users) -> "PurchasedPaidMedia":
+    async def _parse(client, purchased_media: "raw.types.UpdateBotPurchasedPaidMedia", users) -> "PurchasedPaidMedia":
         return PurchasedPaidMedia(
-            from_user=types.User._parse(client, users.get(purchased_media.user_id)),
+            from_user=await types.User._parse(client, users.get(purchased_media.user_id)),
             payload=purchased_media.payload
         )

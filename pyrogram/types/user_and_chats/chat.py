@@ -874,7 +874,7 @@ class Chat(Object):
     # endregion
 
     @staticmethod
-    def _parse_user_chat(
+    async def _parse_user_chat(
         client,
         user: "raw.types.User",
     ) -> Optional["Chat"]:
@@ -917,7 +917,7 @@ class Chat(Object):
             usernames=types.List([types.Username._parse(r) for r in user.usernames]) or None,
             first_name=user.first_name,
             last_name=user.last_name,
-            photo=types.ChatPhoto._parse(client, user.photo, peer_id, user.access_hash),
+            photo=await types.ChatPhoto._parse(client, user.photo, peer_id, user.access_hash),
             restrictions=types.List([types.Restriction._parse(r) for r in user.restriction_reason])
             or None,
             dc_id=getattr(getattr(user, "photo", None), "dc_id", None),
@@ -934,7 +934,7 @@ class Chat(Object):
         )
 
     @staticmethod
-    def _parse_chat_chat(client, chat: "raw.types.Chat") -> Optional["Chat"]:
+    async def _parse_chat_chat(client, chat: "raw.types.Chat") -> Optional["Chat"]:
         if chat is None or isinstance(chat, raw.types.ChatEmpty):
             return None
 
@@ -961,7 +961,7 @@ class Chat(Object):
             is_call_active=chat.call_active,
             is_call_not_empty=chat.call_not_empty,
             usernames=types.List([types.Username._parse(r) for r in usernames]) or None,
-            photo=types.ChatPhoto._parse(client, chat.photo, peer_id, 0),
+            photo=await types.ChatPhoto._parse(client, chat.photo, peer_id, 0),
             permissions=types.ChatPermissions._parse(chat.default_banned_rights),
             members_count=chat.participants_count,
             dc_id=getattr(getattr(chat, "photo", None), "dc_id", None),
@@ -971,7 +971,7 @@ class Chat(Object):
         )
 
     @staticmethod
-    def _parse_channel_chat(
+    async def _parse_channel_chat(
         client,
         channel: "raw.types.Channel",
     ) -> Optional["Chat"]:
@@ -1047,7 +1047,7 @@ class Chat(Object):
             username=channel.username
             or (channel.usernames[0].username if channel.usernames else None),
             usernames=types.List([types.Username._parse(r) for r in usernames]) or None,
-            photo=types.ChatPhoto._parse(
+            photo=await types.ChatPhoto._parse(
                 client, channel.photo, peer_id, getattr(channel, "access_hash", 0)
             ),
             show_message_sender_name=channel.signature_profiles,
@@ -1075,7 +1075,7 @@ class Chat(Object):
         )
 
     @staticmethod
-    def _parse(
+    async def _parse(
         client,
         message: Union["raw.types.Message", "raw.types.MessageService"],
         users: Dict[int, "raw.base.User"],
@@ -1087,25 +1087,25 @@ class Chat(Object):
         chat_id = (peer_id or from_id) if is_chat else (from_id or peer_id)
 
         if isinstance(message.peer_id, raw.types.PeerUser):
-            return Chat._parse_user_chat(client, users.get(chat_id))
+            return await Chat._parse_user_chat(client, users.get(chat_id))
         elif isinstance(message.peer_id, raw.types.PeerChat):
-            return Chat._parse_chat_chat(client, chats.get(chat_id))
+            return await Chat._parse_chat_chat(client, chats.get(chat_id))
         else:
-            return Chat._parse_channel_chat(client, chats.get(chat_id))
+            return await Chat._parse_channel_chat(client, chats.get(chat_id))
 
     @staticmethod
-    def _parse_dialog(
+    async def _parse_dialog(
         client,
         peer: "raw.base.Peer",
         users: Dict[int, "raw.base.User"],
         chats: Dict[int, "raw.base.Chat"],
     ):
         if isinstance(peer, (raw.types.PeerUser, raw.types.InputPeerUser)):
-            return Chat._parse_user_chat(client, users.get(peer.user_id))
+            return await Chat._parse_user_chat(client, users.get(peer.user_id))
         elif isinstance(peer, (raw.types.PeerChat, raw.types.InputPeerChat)):
-            return Chat._parse_chat_chat(client, chats.get(peer.chat_id))
+            return await Chat._parse_chat_chat(client, chats.get(peer.chat_id))
         else:
-            return Chat._parse_channel_chat(client, chats.get(peer.channel_id))
+            return await Chat._parse_channel_chat(client, chats.get(peer.channel_id))
 
     @staticmethod
     async def _parse_full_user(
@@ -1114,10 +1114,10 @@ class Chat(Object):
         users: Dict[int, "raw.base.User"],
         chats: Dict[int, "raw.base.Chat"],
     ) -> "Chat":
-        parsed_chat = Chat._parse_user_chat(client, users[user.id])
+        parsed_chat = await Chat._parse_user_chat(client, users[user.id])
         parsed_chat.raw = user
 
-        parsed_chat.settings = types.ChatSettings._parse(client, user.settings, users)
+        parsed_chat.settings = await types.ChatSettings._parse(client, user.settings, users)
         # parsed_chat.notify_settings
         parsed_chat.common_chats = user.common_chats_count
         parsed_chat.is_blocked = user.blocked
@@ -1137,11 +1137,11 @@ class Chat(Object):
         parsed_chat.can_view_revenue = user.can_view_revenue
         parsed_chat.bot_can_manage_emoji_status = user.bot_can_manage_emoji_status
         parsed_chat.bio = user.about or None
-        parsed_chat.personal_photo = types.ChatPhoto._parse(
+        parsed_chat.personal_photo = await types.ChatPhoto._parse(
             client, user.personal_photo, users[user.id].id, users[user.id].access_hash
         )
-        # parsed_chat.photo = types.ChatPhoto._parse(client, user.profile_photo, users[user.id].id, users[user.id].access_hash)
-        parsed_chat.public_photo = types.ChatPhoto._parse(
+        parsed_chat.photo = await types.ChatPhoto._parse(client, user.profile_photo, users[user.id].id, users[user.id].access_hash)
+        parsed_chat.public_photo = await types.ChatPhoto._parse(
             client, user.fallback_photo, users[user.id].id, users[user.id].access_hash
         )
         # parsed_chat.bot_info = user.bot_info
@@ -1178,17 +1178,17 @@ class Chat(Object):
             user.business_work_hours
         )
         parsed_chat.business_location = types.Location._parse_business(user.business_location)
-        parsed_chat.business_greeting_message = types.BusinessMessage._parse(
+        parsed_chat.business_greeting_message = await types.BusinessMessage._parse(
             client, user.business_greeting_message, users
         )
-        parsed_chat.business_away_message = types.BusinessMessage._parse(
+        parsed_chat.business_away_message = await types.BusinessMessage._parse(
             client, user.business_away_message, users
         )
         parsed_chat.business_intro = await types.BusinessIntro._parse(client, user.business_intro)
         parsed_chat.birthday = types.Birthday._parse(user.birthday)
 
         if user.personal_channel_id:
-            parsed_chat.personal_channel = Chat._parse_channel_chat(
+            parsed_chat.personal_channel = await Chat._parse_channel_chat(
                 client, chats[user.personal_channel_id]
             )
             parsed_chat.personal_channel_message = await client.get_messages(
@@ -1197,7 +1197,7 @@ class Chat(Object):
 
         parsed_chat.gift_count = user.stargifts_count
         # parsed_chat.starref_program
-        parsed_chat.bot_verification = types.BotVerification._parse(
+        parsed_chat.bot_verification = await types.BotVerification._parse(
             client, user.bot_verification, users
         )
         parsed_chat.main_profile_tab = (
@@ -1228,10 +1228,10 @@ class Chat(Object):
         parsed_chat.display_gifts_button = user.display_gifts_button
         parsed_chat.uses_unofficial_app = user.unofficial_security_risk
         parsed_chat.accepted_gift_types = types.AcceptedGiftTypes._parse(user.disallowed_gifts)
-        parsed_chat.note = types.FormattedText._parse(client, user.note)
+        parsed_chat.note = await types.FormattedText._parse(client, user.note)
 
         if parsed_chat.community_id:
-            parsed_chat.community = types.Community._parse(client, chats.get(utils.get_raw_peer_id(parsed_chat.community_id)))
+            parsed_chat.community = await types.Community._parse(client, chats.get(utils.get_raw_peer_id(parsed_chat.community_id)))
 
         return parsed_chat
 
@@ -1242,7 +1242,7 @@ class Chat(Object):
         users: Dict[int, "raw.base.User"],
         chats: Dict[int, "raw.base.Chat"],
     ) -> "Chat":
-        parsed_chat = Chat._parse_chat_chat(client, chats[chat.id])
+        parsed_chat = await Chat._parse_chat_chat(client, chats[chat.id])
         parsed_chat.raw = chat
 
         parsed_chat.description = chat.about or None
@@ -1286,7 +1286,7 @@ class Chat(Object):
         users: Dict[int, "raw.base.User"],
         chats: Dict[int, "raw.base.Chat"],
     ) -> "Chat":
-        parsed_chat = Chat._parse_channel_chat(client, chats[channel.id])
+        parsed_chat = await Chat._parse_channel_chat(client, chats[channel.id])
         parsed_chat.raw = channel
 
         parsed_chat.description = channel.about or None
@@ -1340,7 +1340,7 @@ class Chat(Object):
 
         if chats.get(channel.linked_chat_id):
             parsed_chat.linked_chat_id = utils.get_channel_id(channel.linked_chat_id)
-            parsed_chat.linked_chat = Chat._parse_channel_chat(
+            parsed_chat.linked_chat = await Chat._parse_channel_chat(
                 client, chats[channel.linked_chat_id]
             )
 
@@ -1348,7 +1348,7 @@ class Chat(Object):
             parsed_chat.direct_messages_chat_id = utils.get_channel_id(
                 chats[channel.id].linked_monoforum_id
             )
-            parsed_chat.parent_chat = Chat._parse_channel_chat(
+            parsed_chat.parent_chat = await Chat._parse_channel_chat(
                 client, chats[chats[channel.id].linked_monoforum_id]
             )
 
@@ -1372,7 +1372,7 @@ class Chat(Object):
             else:
                 send_as_raw = chats[channel.default_send_as.channel_id]
 
-            parsed_chat.send_as_chat = Chat._parse_chat(client, send_as_raw)
+            parsed_chat.send_as_chat = await Chat._parse_chat(client, send_as_raw)
 
         parsed_chat.available_reactions = types.ChatReactions._parse(
             client, channel.available_reactions
@@ -1394,7 +1394,7 @@ class Chat(Object):
         parsed_chat.boosts_applied = channel.boosts_applied
         parsed_chat.unrestrict_boost_count = channel.boosts_unrestrict
         parsed_chat.custom_emoji_sticker_set_name = getattr(channel.emojiset, "short_name", None)
-        parsed_chat.bot_verification = types.BotVerification._parse(
+        parsed_chat.bot_verification = await types.BotVerification._parse(
             client, channel.bot_verification, users
         )
         parsed_chat.main_profile_tab = (
@@ -1403,10 +1403,10 @@ class Chat(Object):
         parsed_chat.gift_count = channel.stargifts_count
         parsed_chat.sticker_set_name = getattr(channel.stickerset, "short_name", None)
         parsed_chat.is_paid_messages_available = channel.paid_messages_available
-        parsed_chat.guard_bot = types.User._parse(client, users.get(channel.guard_bot_id))
+        parsed_chat.guard_bot = await types.User._parse(client, users.get(channel.guard_bot_id))
 
         if parsed_chat.community_id:
-            parsed_chat.community = types.Community._parse(client, chats.get(utils.get_raw_peer_id(parsed_chat.community_id)))
+            parsed_chat.community = await types.Community._parse(client, chats.get(utils.get_raw_peer_id(parsed_chat.community_id)))
 
         return parsed_chat
 
@@ -1430,19 +1430,19 @@ class Chat(Object):
             return await Chat._parse_full_channel(client, chat_full.full_chat, users, chats)
 
     @staticmethod
-    def _parse_chat(
+    async def _parse_chat(
         client,
         chat: Union[raw.types.Chat, raw.types.User, raw.types.Channel]
     ) -> Optional["Chat"]:
         if isinstance(chat, (raw.types.Chat, raw.types.ChatForbidden)):
-            return Chat._parse_chat_chat(client, chat)
+            return await Chat._parse_chat_chat(client, chat)
         elif isinstance(chat, raw.types.User):
-            return Chat._parse_user_chat(client, chat)
+            return await Chat._parse_user_chat(client, chat)
         else:
-            return Chat._parse_channel_chat(client, chat)
+            return await Chat._parse_channel_chat(client, chat)
 
     @staticmethod
-    def _parse_preview(client, chat_invite: "raw.types.ChatInvite") -> "Chat":
+    async def _parse_preview(client, chat_invite: "raw.types.ChatInvite") -> "Chat":
         return Chat(
             type=(
                 enums.ChatType.SUPERGROUP
@@ -1458,7 +1458,7 @@ class Chat(Object):
             photo=types.Photo._parse(client, chat_invite.photo),
             members_count=chat_invite.participants_count,
             members=[
-                types.User._parse(client, user)
+                await types.User._parse(client, user)
                 for user in getattr(chat_invite, "participants", [])
             ]
             or None,

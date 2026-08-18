@@ -81,7 +81,7 @@ class Community(Object):
         self.raw = raw
 
     @staticmethod
-    def _parse(
+    async def _parse(
         client: "pyrogram.Client", community: Union["raw.types.Community", "raw.types.CommunityForbidden"]
     ) -> Optional["Community"]:
         if isinstance(community, raw.types.CommunityForbidden):
@@ -98,7 +98,7 @@ class Community(Object):
                 id=utils.get_channel_id(community.id),
                 have_access=bool(community.access_hash),
                 name=community.title,
-                photo=types.ChatPhoto._parse(
+                photo=await types.ChatPhoto._parse(
                     client, community.photo, utils.get_channel_id(community.id), community.access_hash or 0
                 ),
                 date=utils.timestamp_to_datetime(community.date),

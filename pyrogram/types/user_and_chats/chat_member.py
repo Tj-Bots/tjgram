@@ -117,7 +117,7 @@ class ChatMember(Object):
         self.subscription_until_date = subscription_until_date
 
     @staticmethod
-    def _parse(
+    async def _parse(
         client: "pyrogram.Client",
         member: Union["raw.base.ChatParticipant", "raw.base.ChannelParticipant"],
         users: Dict[int, "raw.base.User"],
@@ -128,25 +128,25 @@ class ChatMember(Object):
             return ChatMember(
                 status=enums.ChatMemberStatus.MEMBER,
                 tag=member.rank,
-                user=types.User._parse(client, users[member.user_id]),
+                user=await types.User._parse(client, users[member.user_id]),
                 joined_date=utils.timestamp_to_datetime(member.date),
-                invited_by=types.User._parse(client, users[member.inviter_id]),
+                invited_by=await types.User._parse(client, users[member.inviter_id]),
                 client=client
             )
         elif isinstance(member, raw.types.ChatParticipantAdmin):
             return ChatMember(
                 status=enums.ChatMemberStatus.ADMINISTRATOR,
                 tag=member.rank,
-                user=types.User._parse(client, users[member.user_id]),
+                user=await types.User._parse(client, users[member.user_id]),
                 joined_date=utils.timestamp_to_datetime(member.date),
-                invited_by=types.User._parse(client, users[member.inviter_id]),
+                invited_by=await types.User._parse(client, users[member.inviter_id]),
                 client=client
             )
         elif isinstance(member, raw.types.ChatParticipantCreator):
             return ChatMember(
                 status=enums.ChatMemberStatus.OWNER,
                 tag=member.rank,
-                user=types.User._parse(client, users[member.user_id]),
+                user=await types.User._parse(client, users[member.user_id]),
                 client=client
             )
 
@@ -155,7 +155,7 @@ class ChatMember(Object):
             return ChatMember(
                 status=enums.ChatMemberStatus.MEMBER,
                 tag=member.rank,
-                user=types.User._parse(client, users[member.user_id]),
+                user=await types.User._parse(client, users[member.user_id]),
                 joined_date=utils.timestamp_to_datetime(member.date),
                 subscription_until_date=utils.timestamp_to_datetime(getattr(member, "subscription_until_date", None)),
                 client=client
@@ -164,11 +164,11 @@ class ChatMember(Object):
             return ChatMember(
                 status=enums.ChatMemberStatus.ADMINISTRATOR,
                 tag=member.rank,
-                user=types.User._parse(client, users[member.user_id]),
+                user=await types.User._parse(client, users[member.user_id]),
                 joined_date=utils.timestamp_to_datetime(member.date),
-                promoted_by=types.User._parse(client, users[member.promoted_by]),
+                promoted_by=await types.User._parse(client, users[member.promoted_by]),
                 invited_by=(
-                    types.User._parse(client, users[member.inviter_id])
+                    await types.User._parse(client, users[member.inviter_id])
                     if member.inviter_id else None
                 ),
                 custom_title=member.rank,
@@ -181,12 +181,12 @@ class ChatMember(Object):
             peer_id = utils.get_raw_peer_id(peer)
 
             user = (
-                types.User._parse(client, users[peer_id])
+                await types.User._parse(client, users[peer_id])
                 if isinstance(peer, raw.types.PeerUser) else None
             )
 
             chat = (
-                types.Chat._parse_chat(client, chats[peer_id])
+                await types.Chat._parse_chat(client, chats[peer_id])
                 if not isinstance(peer, raw.types.PeerUser) else None
             )
 
@@ -202,7 +202,7 @@ class ChatMember(Object):
                 until_date=utils.timestamp_to_datetime(member.banned_rights.until_date),
                 joined_date=utils.timestamp_to_datetime(member.date),
                 is_member=not member.left,
-                restricted_by=types.User._parse(client, users[member.kicked_by]),
+                restricted_by=await types.User._parse(client, users[member.kicked_by]),
                 permissions=types.ChatPermissions._parse(member.banned_rights),
                 client=client
             )
@@ -210,7 +210,7 @@ class ChatMember(Object):
             return ChatMember(
                 status=enums.ChatMemberStatus.OWNER,
                 tag=member.rank,
-                user=types.User._parse(client, users[member.user_id]),
+                user=await types.User._parse(client, users[member.user_id]),
                 custom_title=member.rank,
                 privileges=types.ChatAdministratorRights._parse(member.admin_rights),
                 client=client
@@ -220,12 +220,12 @@ class ChatMember(Object):
             peer_id = utils.get_raw_peer_id(peer)
 
             user = (
-                types.User._parse(client, users[peer_id])
+                await types.User._parse(client, users[peer_id])
                 if isinstance(peer, raw.types.PeerUser) else None
             )
 
             chat = (
-                types.Chat._parse_chat(client, chats[peer_id])
+                await types.Chat._parse_chat(client, chats[peer_id])
                 if not isinstance(peer, raw.types.PeerUser) else None
             )
 
@@ -239,9 +239,9 @@ class ChatMember(Object):
             return ChatMember(
                 status=enums.ChatMemberStatus.MEMBER,
                 tag=member.rank,
-                user=types.User._parse(client, users[member.user_id]),
+                user=await types.User._parse(client, users[member.user_id]),
                 joined_date=utils.timestamp_to_datetime(member.date),
-                invited_by=types.User._parse(client, users[member.inviter_id]),
+                invited_by=await types.User._parse(client, users[member.inviter_id]),
                 subscription_until_date=utils.timestamp_to_datetime(getattr(member, "subscription_until_date", None)),
                 client=client
             )

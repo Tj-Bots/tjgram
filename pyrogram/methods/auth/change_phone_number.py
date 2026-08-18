@@ -56,4 +56,4 @@ class ChangePhoneNumber:
             )
         )
 
-        return types.User._parse(self, r)
+        return await types.User._parse(self, r)

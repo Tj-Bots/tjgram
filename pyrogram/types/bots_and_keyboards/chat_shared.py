@@ -45,7 +45,7 @@ class ChatShared(Object):
         self.chat = chat
 
     @staticmethod
-    def _parse(
+    async def _parse(
         client: "pyrogram.Client",
         action: Union[
             "raw.types.MessageActionRequestedPeer",
@@ -72,7 +72,7 @@ class ChatShared(Object):
             raw_chat = chats.get(utils.get_raw_peer_id(peer))
 
             if raw_chat:
-                chat_shared = types.Chat._parse_chat(client, raw_chat)
+                chat_shared = await types.Chat._parse_chat(client, raw_chat)
             else:
                 chat_shared = types.Chat(
                     id=peer_id,

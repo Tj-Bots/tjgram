@@ -64,4 +64,4 @@ class CheckGiftCode:
         users = {i.id: i for i in r.users}
         chats = {i.id: i for i in r.chats}
 
-        return types.CheckedGiftCode._parse(self, r, users, chats)
+        return await types.CheckedGiftCode._parse(self, r, users, chats)

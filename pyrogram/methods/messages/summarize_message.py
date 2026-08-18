@@ -60,14 +60,14 @@ class SummarizeMessage:
 
         Example:
             .. code-block:: python
-            
+
                 await app.summarize_message(
                     chat_id,
                     message_id,
                     translate_to_language_code="ru",
                     tone="neutral"
                 )
-            
+
         """
         r = await self.invoke(
             raw.functions.messages.SummarizeText(
@@ -78,4 +78,4 @@ class SummarizeMessage:
             )
         )
 
-        return types.FormattedText._parse(self, r)
+        return await types.FormattedText._parse(self, r)

@@ -16,33 +16,16 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Dict
+from enum import auto
 
-import pyrogram
-from pyrogram import raw, types
-
-from ..object import Object
+from .auto_name import AutoName
 
 
-class CommunityChatAdded(Object):
-    """Describes a service message about a chat being added to a community.
+class ChatPhotoStickerType(AutoName):
+    """Chat photo sticker type enumeration used in :obj:`~pyrogram.types.ChatPhotoSticker`."""
 
-    Parameters:
-        community (:obj:`~pyrogram.types.Community`):
-            The new community to which the chat belongs.
-    """
+    REGULAR_OR_MASK = auto()
+    "Sticker, which was used to create the chat photo"
 
-    def __init__(self, *, community: "types.ChecklistTask"):
-        super().__init__()
-
-        self.community = community
-
-    @staticmethod
-    async def _parse(
-        client: "pyrogram.Client",
-        action: "raw.types.MessageActionChangeCommunity",
-        chats: Dict[int, "raw.base.Chat"],
-    ) -> "CommunityChatAdded":
-        return CommunityChatAdded(
-            community=await types.Community._parse(client, chats.get(action.community_id)),
-        )
+    CUSTOM_EMOJI = auto()
+    "Custom emoji, which was used to create the chat photo"

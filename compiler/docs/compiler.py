@@ -691,6 +691,8 @@ def pyrogram_api():
             VerificationStatus
             Chat
             ChatPhoto
+            ChatPhotoSticker
+            AnimatedChatPhoto
             ChatMember
             ChatPermissions
             ChatAdministratorRights
@@ -1338,6 +1340,7 @@ def pyrogram_api():
             ChatJoinType
             ChatMemberStatus
             ChatMembersFilter
+            ChatPhotoStickerType
             ChatType
             ClientPlatform
             FolderColor

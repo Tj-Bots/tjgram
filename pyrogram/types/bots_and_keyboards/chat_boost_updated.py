@@ -49,14 +49,14 @@ class ChatBoostUpdated(Object, Update):
         self.boost = boost
 
     @staticmethod
-    def _parse(
+    async def _parse(
         client: "pyrogram.Client",
         update: "raw.types.UpdateBotChatBoost",
         users: Dict[int, "raw.types.User"],
         chats: Dict[int, "raw.types.Channel"],
     ) -> "ChatBoostUpdated":
         return ChatBoostUpdated(
-            chat=types.Chat._parse_channel_chat(client, chats.get(utils.get_raw_peer_id(update.peer))),
-            boost=types.ChatBoost._parse(client, update.boost, users),
+            chat=await types.Chat._parse_channel_chat(client, chats.get(utils.get_raw_peer_id(update.peer))),
+            boost=await types.ChatBoost._parse(client, update.boost, users),
             client=client
         )

@@ -54,7 +54,7 @@ class FactCheck(Object):
         self.entities = entities
 
     @staticmethod
-    def _parse(
+    async def _parse(
         client: "pyrogram.Client",
         fact_check: "raw.types.FactCheck",
         users: Dict[int, List["raw.base.User"]]
@@ -62,7 +62,7 @@ class FactCheck(Object):
         if not fact_check:
             return None
 
-        message, entities = (utils.parse_text_with_entities(client, getattr(fact_check, "text", None), users)).values()
+        message, entities = (await utils.parse_text_with_entities(client, getattr(fact_check, "text", None), users)).values()
 
         return FactCheck(
             need_check=getattr(fact_check, "need_check", None),

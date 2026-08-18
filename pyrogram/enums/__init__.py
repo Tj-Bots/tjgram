@@ -25,6 +25,7 @@ from .chat_join_request_query_result import ChatJoinRequestQueryResult
 from .chat_join_type import ChatJoinType
 from .chat_member_status import ChatMemberStatus
 from .chat_members_filter import ChatMembersFilter
+from .chat_photo_sticker_type import ChatPhotoStickerType
 from .chat_type import ChatType
 from .client_platform import ClientPlatform
 from .folder_color import FolderColor
@@ -68,6 +69,7 @@ __all__ = [
     'ChatJoinType',
     'ChatMemberStatus',
     'ChatMembersFilter',
+    'ChatPhotoStickerType',
     'ChatType',
     'ClientPlatform',
     'FolderColor',

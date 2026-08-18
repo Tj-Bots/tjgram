@@ -82,7 +82,7 @@ class DirectMessagesTopic(Object):
         self.last_message = last_message
 
     @staticmethod
-    def _parse(
+    async def _parse(
         client: "pyrogram.Client",
         topic: "raw.types.MonoForumDialog",
         messages: dict = {},
@@ -94,7 +94,7 @@ class DirectMessagesTopic(Object):
 
         return DirectMessagesTopic(
             id=topic.peer.user_id,
-            user=types.User._parse(client, users.get(topic.peer.user_id)),
+            user=await types.User._parse(client, users.get(topic.peer.user_id)),
             can_send_unpaid_messages=topic.nopaid_messages_exception,
             is_marked_as_unread=topic.unread_mark,
             unread_count=topic.unread_count,

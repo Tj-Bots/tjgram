@@ -73,7 +73,7 @@ class ChatJoinRequest(Object, Update):
         self.query_id = query_id
 
     @staticmethod
-    def _parse(
+    async def _parse(
         client: "pyrogram.Client",
         update: "raw.types.UpdateBotChatInviteRequester",
         users: Dict[int, "raw.types.User"],
@@ -82,11 +82,11 @@ class ChatJoinRequest(Object, Update):
         chat_id = utils.get_raw_peer_id(update.peer)
 
         return ChatJoinRequest(
-            chat=types.Chat._parse_chat(client, chats[chat_id]),
-            from_user=types.User._parse(client, users[update.user_id]),
+            chat=await types.Chat._parse_chat(client, chats[chat_id]),
+            from_user=await types.User._parse(client, users[update.user_id]),
             date=utils.timestamp_to_datetime(update.date),
             bio=update.about,
-            invite_link=types.ChatInviteLink._parse(client, update.invite, users),
+            invite_link=await types.ChatInviteLink._parse(client, update.invite, users),
             query_id=str(update.query_id) if update.query_id else None,
             client=client,
         )

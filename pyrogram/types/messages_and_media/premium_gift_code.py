@@ -110,8 +110,8 @@ class PremiumGiftCode(Object):
         )
 
         return PremiumGiftCode(
-            creator=types.Chat._parse_chat(client, users.get(raw_peer_id) or chats.get(raw_peer_id)),
-            text=types.FormattedText._parse(client, giftcode.message),
+            creator=await types.Chat._parse_chat(client, users.get(raw_peer_id) or chats.get(raw_peer_id)),
+            text=await types.FormattedText._parse(client, giftcode.message),
             is_from_giveaway=giftcode.via_giveaway,
             is_unclaimed=giftcode.unclaimed,
             currency=giftcode.currency,

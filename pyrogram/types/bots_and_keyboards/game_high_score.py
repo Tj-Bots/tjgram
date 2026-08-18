@@ -53,20 +53,20 @@ class GameHighScore(Object):
         self.position = position
 
     @staticmethod
-    def _parse(client, game_high_score: raw.types.HighScore, users: dict) -> "GameHighScore":
+    async def _parse(client, game_high_score: raw.types.HighScore, users: dict) -> "GameHighScore":
         users = {i.id: i for i in users}
 
         return GameHighScore(
-            user=types.User._parse(client, users[game_high_score.user_id]),
+            user=await types.User._parse(client, users[game_high_score.user_id]),
             score=game_high_score.score,
             position=game_high_score.pos,
             client=client
         )
 
     @staticmethod
-    def _parse_action(client, service: raw.types.MessageService, users: dict):
+    async def _parse_action(client, service: raw.types.MessageService, users: dict):
         return GameHighScore(
-            user=types.User._parse(client, users[utils.get_raw_peer_id(service.from_id or service.peer_id)]),
+            user=await types.User._parse(client, users[utils.get_raw_peer_id(service.from_id or service.peer_id)]),
             score=service.action.score,
             client=client
         )

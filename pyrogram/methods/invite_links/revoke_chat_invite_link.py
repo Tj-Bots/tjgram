@@ -67,4 +67,4 @@ class RevokeChatInviteLink:
             else r.invite
         )
 
-        return types.ChatInviteLink._parse(self, chat_invite, users)
+        return await types.ChatInviteLink._parse(self, chat_invite, users)

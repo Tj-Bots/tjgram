@@ -43,11 +43,11 @@ class BotAccessSettings(Object):
         self.added_users = added_users
 
     @staticmethod
-    def _parse(client, bot_access_settings: "raw.base.bots.AccessSettings"):
+    async def _parse(client, bot_access_settings: "raw.base.bots.AccessSettings"):
         return BotAccessSettings(
             is_access_restricted=bot_access_settings.restricted,
             added_users=types.List(
-                [types.User._parse(client, i) for i in bot_access_settings.add_users]
+                [await types.User._parse(client, i) for i in bot_access_settings.add_users]
             )
             if bot_access_settings.add_users
             else None,

@@ -66,7 +66,7 @@ class ChecklistTask(Object):
         self.completion_date = completion_date
 
     @staticmethod
-    def _parse(
+    async def _parse(
         client: "pyrogram.Client",
         item: "raw.types.TodoItem",
         completion: Optional["raw.types.TodoCompletion"],
@@ -74,7 +74,7 @@ class ChecklistTask(Object):
         chats: Dict[int, "raw.base.Chat"],
     ) -> "ChecklistTask":
         text, entities = (
-            utils.parse_text_with_entities(client, item.title, users)
+            await utils.parse_text_with_entities(client, item.title, users)
         ).values()
 
         completed_by_peer_id = utils.get_raw_peer_id(getattr(completion, "completed_by", None))
@@ -83,6 +83,6 @@ class ChecklistTask(Object):
             id=item.id,
             text=text,
             entities=entities,
-            completed_by=types.Chat._parse_chat(client, users.get(completed_by_peer_id) or chats.get(completed_by_peer_id)),
+            completed_by=await types.Chat._parse_chat(client, users.get(completed_by_peer_id) or chats.get(completed_by_peer_id)),
             completion_date=utils.timestamp_to_datetime(getattr(completion, "date", None))
         )

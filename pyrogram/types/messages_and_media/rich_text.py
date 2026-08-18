@@ -119,7 +119,7 @@ class RichText(Object):
         if isinstance(rich_text, raw.types.TextMentionName):
             return RichTextTextMention(
                 text=await RichText._parse(client, rich_text.text),
-                user=types.User._parse(client, users.get(rich_text.user_id)),
+                user=await types.User._parse(client, users.get(rich_text.user_id)),
             )
 
         if isinstance(rich_text, raw.types.TextSubscript):

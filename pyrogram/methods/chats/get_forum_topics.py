@@ -83,7 +83,7 @@ class GetForumTopics:
             topics = []
 
             for topic in r.topics:
-                topics.append(types.ForumTopic._parse(self, topic, messages, users, chats))
+                topics.append(await types.ForumTopic._parse(self, topic, messages, users, chats))
 
             if not topics:
                 return

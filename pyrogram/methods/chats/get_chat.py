@@ -71,7 +71,7 @@ class GetChat:
             )
 
             if isinstance(r, raw.types.ChatInvite):
-                return types.Chat._parse_preview(self, r)
+                return await types.Chat._parse_preview(self, r)
 
             await self.fetch_peers([r.chat])
 
@@ -100,7 +100,7 @@ class GetChat:
             else:
                 r = await self.invoke(raw.functions.messages.GetChats(id=[peer.chat_id]))
 
-            return types.Chat._parse_chat(
+            return await types.Chat._parse_chat(
                 self,
                 r.chats[0] if isinstance(r, raw.types.messages.Chats) else r[0]
             )

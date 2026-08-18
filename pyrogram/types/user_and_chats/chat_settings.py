@@ -145,7 +145,7 @@ class ChatSettings(Object):
         self.last_photo_change_date = last_photo_change_date
 
     @staticmethod
-    def _parse(client, chat_settings: "raw.types.PeerSettings", users) -> Optional["ChatSettings"]:
+    async def _parse(client, chat_settings: "raw.types.PeerSettings", users) -> Optional["ChatSettings"]:
         if not chat_settings:
             return None
 
@@ -164,7 +164,7 @@ class ChatSettings(Object):
             geo_distance=getattr(chat_settings, "geo_distance", None),
             request_chat_title=getattr(chat_settings, "request_chat_title", None),
             request_chat_date=utils.timestamp_to_datetime(getattr(chat_settings, "request_chat_date", None)),
-            business_bot=types.User._parse(client, users.get(getattr(chat_settings, "business_bot_id", None))),
+            business_bot=await types.User._parse(client, users.get(getattr(chat_settings, "business_bot_id", None))),
             business_bot_manage_url=getattr(chat_settings, "business_bot_manage_url", None),
             charge_paid_message_stars=getattr(chat_settings, "charge_paid_message_stars", None),
             registration_date=getattr(chat_settings, "registration_month", None),

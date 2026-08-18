@@ -113,7 +113,7 @@ class GroupCallMember(Object):
         self.is_screen_sharing_enabled = is_screen_sharing_enabled
 
     @staticmethod
-    def _parse(
+    async def _parse(
         client: "pyrogram.Client",
         member: "raw.types.GroupCallParticipant",
         users: Dict[int, "raw.base.User"],
@@ -122,7 +122,7 @@ class GroupCallMember(Object):
         peer = member.peer
         peer_id = utils.get_raw_peer_id(peer)
 
-        parsed_chat = types.Chat._parse_chat(
+        parsed_chat = await types.Chat._parse_chat(
             client,
             users[peer_id] if isinstance(peer, raw.types.PeerUser) else chats[peer_id],
         )

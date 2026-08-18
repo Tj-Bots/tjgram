@@ -50,9 +50,9 @@ class PrivacyRule(Object):
         self.chats = chats
 
     @staticmethod
-    def _parse(client, rule: "raw.base.PrivacyRule", users: dict, chats: dict) -> "PrivacyRule":
+    async def _parse(client, rule: "raw.base.PrivacyRule", users: dict, chats: dict) -> "PrivacyRule":
         return PrivacyRule(
             type=enums.PrivacyRuleType(type(rule)),
-            users=types.List(types.User._parse(client, users.get(i)) for i in getattr(rule, "users", [])) or None,
-            chats=types.List(types.Chat._parse_chat(client, chats.get(i)) for i in getattr(rule, "chats", [])) or None
+            users=types.List([await types.User._parse(client, users.get(i)) for i in getattr(rule, "users", [])]) or None,
+            chats=types.List([await types.Chat._parse_chat(client, chats.get(i)) for i in getattr(rule, "chats", [])]) or None
         )

@@ -52,5 +52,5 @@ class ManagedBotCreated(Object):
             return
 
         return ManagedBotCreated(
-            bot=types.User._parse(client, users.get(managed_bot_created.bot_id))
+            bot=await types.User._parse(client, users.get(managed_bot_created.bot_id))
         )

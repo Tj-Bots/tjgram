@@ -52,4 +52,4 @@ class GetPrivacy:
         users = {i.id: i for i in r.users}
         chats = {i.id: i for i in r.chats}
 
-        return types.List(types.PrivacyRule._parse(self, rule, users, chats) for rule in r.rules)
+        return types.List([await types.PrivacyRule._parse(self, rule, users, chats) for rule in r.rules])

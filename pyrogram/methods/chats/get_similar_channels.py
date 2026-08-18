@@ -55,6 +55,6 @@ class GetSimilarChannels:
                 )
             )
 
-            return types.List([types.Chat._parse_channel_chat(self, chat) for chat in r.chats]) or None
+            return types.List([await types.Chat._parse_channel_chat(self, chat) for chat in r.chats]) or None
         else:
             raise ValueError(f'The chat_id "{chat_id}" belongs to a user or chat')

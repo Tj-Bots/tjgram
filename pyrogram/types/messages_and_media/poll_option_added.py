@@ -65,5 +65,5 @@ class PollOptionAdded(Object):
         return PollOptionAdded(
             poll_message=reply_message,
             option_persistent_id=answer.option.decode(),
-            text=types.FormattedText._parse(client, answer.text)
+            text=await types.FormattedText._parse(client, answer.text)
         )

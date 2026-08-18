@@ -56,14 +56,14 @@ class FormattedText(Object):
         return self.text
 
     @staticmethod
-    def _parse(client: "pyrogram.Client", text: "raw.types.TextWithEntities") -> "FormattedText":
+    async def _parse(client: "pyrogram.Client", text: "raw.types.TextWithEntities") -> "FormattedText":
         if not isinstance(text, raw.types.TextWithEntities):
             return None
 
         entities = types.List(
             filter(
                 lambda x: x is not None,
-                [types.MessageEntity._parse(client, entity, {}) for entity in text.entities],
+                [await types.MessageEntity._parse(client, entity, {}) for entity in text.entities],
             )
         )
 

@@ -123,7 +123,7 @@ class PaymentForm(Object):
         self.raw = raw
 
     @staticmethod
-    def _parse(client, form: "raw.base.payments.PaymentForm") -> "PaymentForm":
+    async def _parse(client, form: "raw.base.payments.PaymentForm") -> "PaymentForm":
         users = {i.id: i for i in getattr(form, "users", [])}
 
         if isinstance(form, raw.types.payments.PaymentForm):
@@ -134,9 +134,9 @@ class PaymentForm(Object):
                 description=form.description,
                 photo=types.Photo._parse(client, form.photo),
                 seller_bot_user_id=form.bot_id,
-                seller_bot=types.User._parse(client, users.get(form.bot_id)),
+                seller_bot=await types.User._parse(client, users.get(form.bot_id)),
                 payment_provider_user_id=form.provider_id,
-                payment_provider=types.User._parse(client, users.get(form.provider_id)),
+                payment_provider=await types.User._parse(client, users.get(form.provider_id)),
                 invoice=types.Invoice._parse(client, form.invoice),
                 url=form.url,
                 can_save_credentials=form.can_save_credentials,
@@ -163,7 +163,7 @@ class PaymentForm(Object):
                 description=form.description,
                 photo=types.Photo._parse(client, form.photo),
                 seller_bot_user_id=form.bot_id,
-                seller_bot=types.User._parse(client, users.get(form.bot_id)),
+                seller_bot=await types.User._parse(client, users.get(form.bot_id)),
                 invoice=types.Invoice._parse(client, form.invoice),
                 raw=form
             )

@@ -41,4 +41,4 @@ class GetOwnedBots:
 
         bots = await self.invoke(raw.functions.bots.GetAdminedBots())
 
-        return types.List([types.User._parse(self, bot) for bot in bots])
+        return types.List([await types.User._parse(self, bot) for bot in bots])

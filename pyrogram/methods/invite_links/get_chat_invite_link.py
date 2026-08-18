@@ -53,4 +53,4 @@ class GetChatInviteLink:
 
         users = {i.id: i for i in r.users}
 
-        return types.ChatInviteLink._parse(self, r.invite, users)
+        return await types.ChatInviteLink._parse(self, r.invite, users)

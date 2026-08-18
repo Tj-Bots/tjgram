@@ -44,4 +44,4 @@ class GetManagedBotAccessSettings:
             )
         )
 
-        return types.BotAccessSettings._parse(self, r)
+        return await types.BotAccessSettings._parse(self, r)

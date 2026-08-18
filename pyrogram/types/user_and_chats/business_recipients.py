@@ -63,7 +63,7 @@ class BusinessRecipients(Object):
         self.users = users
 
     @staticmethod
-    def _parse(
+    async def _parse(
         client,
         recipients: "raw.types.BusinessRecipients",
         users: Optional[dict] = None
@@ -74,5 +74,5 @@ class BusinessRecipients(Object):
             contacts=getattr(recipients, "contacts", None),
             non_contacts=getattr(recipients, "non_contacts", None),
             exclude_selected=getattr(recipients, "exclude_selected", None),
-            users=types.List(types.User._parse(client, users[i]) for i in recipients.users) or None if getattr(recipients, "users", None) else None
+            users=types.List([await types.User._parse(client, users[i]) for i in recipients.users]) or None if getattr(recipients, "users", None) else None
         )

@@ -87,7 +87,7 @@ class PreCheckoutQuery(Object, Update):
 
         return PreCheckoutQuery(
             id=str(pre_checkout_query.query_id),
-            from_user=types.User._parse(client, users[pre_checkout_query.user_id]),
+            from_user=await types.User._parse(client, users[pre_checkout_query.user_id]),
             currency=pre_checkout_query.currency,
             total_amount=pre_checkout_query.total_amount,
             invoice_payload=invoice_payload,

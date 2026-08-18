@@ -49,7 +49,7 @@ class ChecklistTasksAdded(Object):
         self.tasks = tasks
 
     @staticmethod
-    def _parse(
+    async def _parse(
         client: "pyrogram.Client",
         message: "raw.types.MessageService",
         users: Dict[int, "raw.base.User"],
@@ -59,5 +59,5 @@ class ChecklistTasksAdded(Object):
 
         return ChecklistTasksAdded(
             checklist_message_id=getattr(message.reply_to, "reply_to_msg_id", None),
-            tasks=types.List([types.ChecklistTask._parse(client, task, None, users, chats) for task in action.list])
+            tasks=types.List([await types.ChecklistTask._parse(client, task, None, users, chats) for task in action.list])
         )

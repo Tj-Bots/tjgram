@@ -47,7 +47,7 @@ class MessageOrigin(Object):
         self.date = date
 
     @staticmethod
-    def _parse(
+    async def _parse(
         client: "pyrogram.Client",
         fwd_from: "raw.types.MessageFwdHeader",
         users: Dict[int, "raw.base.User"],
@@ -66,20 +66,20 @@ class MessageOrigin(Object):
             if peer_type == "user":
                 return types.MessageOriginUser(
                     date=forward_date,
-                    sender_user=types.User._parse(client, users.get(raw_peer_id))
+                    sender_user=await types.User._parse(client, users.get(raw_peer_id))
                 )
             else:
                 if fwd_from.channel_post:
                     return types.MessageOriginChannel(
                         date=forward_date,
-                        chat=types.Chat._parse_channel_chat(client, chats.get(raw_peer_id)),
+                        chat=await types.Chat._parse_channel_chat(client, chats.get(raw_peer_id)),
                         message_id=fwd_from.channel_post,
                         author_signature=fwd_from.post_author
                     )
                 else:
                     return types.MessageOriginChat(
                         date=forward_date,
-                        sender_chat=types.Chat._parse_channel_chat(client, chats.get(raw_peer_id)),
+                        sender_chat=await types.Chat._parse_channel_chat(client, chats.get(raw_peer_id)),
                         author_signature=fwd_from.post_author
                     )
         elif fwd_from.from_name:

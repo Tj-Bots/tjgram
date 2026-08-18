@@ -48,7 +48,7 @@ class FoundContacts(Object):
         self.global_results = global_results
 
     @staticmethod
-    def _parse(client, found: "raw.types.contacts.Found") -> "FoundContacts":
+    async def _parse(client, found: "raw.types.contacts.Found") -> "FoundContacts":
         users = {u.id: u for u in found.users}
         chats = {c.id: c for c in found.chats}
 
@@ -59,13 +59,13 @@ class FoundContacts(Object):
             peer_id = utils.get_raw_peer_id(result)
             peer = users.get(peer_id) or chats.get(peer_id)
 
-            my_results.append(types.Chat._parse_chat(client, peer))
+            my_results.append(await types.Chat._parse_chat(client, peer))
 
         for result in found.results:
             peer_id = utils.get_raw_peer_id(result)
             peer = users.get(peer_id) or chats.get(peer_id)
 
-            global_results.append(types.Chat._parse_chat(client, peer))
+            global_results.append(await types.Chat._parse_chat(client, peer))
 
         return FoundContacts(
             my_results=types.List(my_results) or None,

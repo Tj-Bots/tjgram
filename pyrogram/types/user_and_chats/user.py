@@ -673,7 +673,7 @@ class User(Object, Update):
     # endregion
 
     @staticmethod
-    def _parse(client, user: "raw.base.User") -> Optional["User"]:
+    async def _parse(client, user: "raw.base.User") -> Optional["User"]:
         if not isinstance(user, raw.types.User):
             return None
 
@@ -723,7 +723,7 @@ class User(Object, Update):
             emoji_status=types.EmojiStatus._parse(client, user.emoji_status),
             dc_id=getattr(user.photo, "dc_id", None),
             phone_number=user.phone,
-            photo=types.ChatPhoto._parse(client, user.photo, user.id, user.access_hash),
+            photo=await types.ChatPhoto._parse(client, user.photo, user.id, user.access_hash),
             restrictions=types.List([types.Restriction._parse(r) for r in user.restriction_reason])
             or None,
             accent_color_id=accent_color_id,
@@ -758,10 +758,10 @@ class User(Object, Update):
         users: Dict[int, "raw.base.User"],
         chats: Dict[int, "raw.base.Chat"],
     ) -> Optional["User"]:
-        parsed_user = User._parse(client, users[user.id])
+        parsed_user = await User._parse(client, users[user.id])
         parsed_user.raw = user
 
-        parsed_user.settings = types.ChatSettings._parse(client, user.settings, users)
+        parsed_user.settings = await types.ChatSettings._parse(client, user.settings, users)
         # parsed_user.notify_settings = user.notify_settings
         parsed_user.common_chats = user.common_chats_count
         parsed_user.is_blocked = user.blocked
@@ -782,11 +782,11 @@ class User(Object, Update):
         parsed_user.display_gifts_button = user.display_gifts_button
         parsed_user.uses_unofficial_app = user.unofficial_security_risk
         parsed_user.bio = user.about or None
-        parsed_user.personal_photo = types.ChatPhoto._parse(
+        parsed_user.personal_photo = await types.ChatPhoto._parse(
             client, user.personal_photo, users[user.id].id, users[user.id].access_hash
         )
-        # parsed_user.photo = types.ChatPhoto._parse(client, user.profile_photo, users[user.id].id, users[user.id].access_hash)
-        parsed_user.public_photo = types.ChatPhoto._parse(
+        parsed_user.photo = await types.ChatPhoto._parse(client, user.profile_photo, users[user.id].id, users[user.id].access_hash)
+        parsed_user.public_photo = await types.ChatPhoto._parse(
             client, user.fallback_photo, users[user.id].id, users[user.id].access_hash
         )
         # parsed_user.bot_info = user.bot_info
@@ -824,17 +824,17 @@ class User(Object, Update):
             user.business_work_hours
         )
         parsed_user.business_location = types.Location._parse_business(user.business_location)
-        parsed_user.business_greeting_message = types.BusinessMessage._parse(
+        parsed_user.business_greeting_message = await types.BusinessMessage._parse(
             client, user.business_greeting_message, users
         )
-        parsed_user.business_away_message = types.BusinessMessage._parse(
+        parsed_user.business_away_message = await types.BusinessMessage._parse(
             client, user.business_away_message, users
         )
         parsed_user.business_intro = await types.BusinessIntro._parse(client, user.business_intro)
         parsed_user.birthday = types.Birthday._parse(user.birthday)
 
         if user.personal_channel_id:
-            parsed_user.personal_channel = types.Chat._parse_channel_chat(
+            parsed_user.personal_channel = await types.Chat._parse_channel_chat(
                 client, chats[user.personal_channel_id]
             )
             parsed_user.personal_channel_message = await client.get_messages(
@@ -843,7 +843,7 @@ class User(Object, Update):
 
         parsed_user.gift_count = user.stargifts_count
         # parsed_user.starref_program = user.starref_program
-        parsed_user.bot_verification = types.BotVerification._parse(
+        parsed_user.bot_verification = await types.BotVerification._parse(
             client, user.bot_verification, users
         )
         parsed_user.main_profile_tab = (
@@ -871,10 +871,10 @@ class User(Object, Update):
             user.stars_my_pending_rating_date
         )
         parsed_user.accepted_gift_types = types.AcceptedGiftTypes._parse(user.disallowed_gifts)
-        parsed_user.note = types.FormattedText._parse(client, user.note)
+        parsed_user.note = await types.FormattedText._parse(client, user.note)
 
         if parsed_user.community_id:
-            parsed_user.community = types.Community._parse(
+            parsed_user.community = await types.Community._parse(
                 client, chats.get(utils.get_raw_peer_id(parsed_user.community_id))
             )
 

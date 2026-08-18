@@ -111,7 +111,7 @@ class GetDialogs:
 
                 seen_dialogs_ids.add(peer_id)
 
-                dialogs.append(types.Dialog._parse(self, dialog, messages, users, chats))
+                dialogs.append(await types.Dialog._parse(self, dialog, messages, users, chats))
 
             if not dialogs:
                 return

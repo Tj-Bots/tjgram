@@ -66,7 +66,7 @@ class GetChatMember:
             users = {i.id: i for i in r.users}
 
             for member in members:
-                member = types.ChatMember._parse(self, member, users, {})
+                member = await types.ChatMember._parse(self, member, users, {})
 
                 if isinstance(user, raw.types.InputPeerSelf):
                     if member.user.is_self:
@@ -87,6 +87,6 @@ class GetChatMember:
             users = {i.id: i for i in r.users}
             chats = {i.id: i for i in r.chats}
 
-            return types.ChatMember._parse(self, r.participant, users, chats)
+            return await types.ChatMember._parse(self, r.participant, users, chats)
         else:
             raise ValueError(f'The chat_id "{chat_id}" belongs to a user')

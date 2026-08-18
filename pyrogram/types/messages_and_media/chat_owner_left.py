@@ -38,12 +38,12 @@ class ChatOwnerLeft(Object):
         self.new_owner = new_owner
 
     @staticmethod
-    def _parse(
+    async def _parse(
         client: "pyrogram.Client",
         action: "raw.types.MessageActionNewCreatorPending",
         users: Dict[int, "types.User"],
     ) -> "ChatOwnerLeft":
         if isinstance(action, raw.types.MessageActionNewCreatorPending):
             return ChatOwnerLeft(
-                new_owner=types.User._parse(client, users.get(action.new_creator_id))
+                new_owner=await types.User._parse(client, users.get(action.new_creator_id))
             )

@@ -46,4 +46,4 @@ class GetPersonalChannels:
             )
         )
 
-        return types.List(types.Chat._parse_chat(self, i) for i in r.chats) or None
+        return types.List([await types.Chat._parse_chat(self, i) for i in r.chats]) or None

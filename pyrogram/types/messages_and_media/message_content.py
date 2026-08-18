@@ -199,7 +199,7 @@ class MessageContent(Object):
             game = types.Game._parse(client, media)
             media_type = enums.MessageMediaType.GAME
         elif isinstance(media, raw.types.MessageMediaGiveaway):
-            giveaway = types.Giveaway._parse(client, media, chats)
+            giveaway = await types.Giveaway._parse(client, media, chats)
             media_type = enums.MessageMediaType.GIVEAWAY
         elif isinstance(media, raw.types.MessageMediaGiveawayResults):
             giveaway_winners = await types.GiveawayWinners._parse(client, media, users, chats)
@@ -262,7 +262,7 @@ class MessageContent(Object):
             poll = await types.Poll._parse(
                 client,
                 media,
-                description=types.FormattedText._parse(
+                description=await types.FormattedText._parse(
                     client,
                     message
                 ) if message else None,
@@ -278,7 +278,7 @@ class MessageContent(Object):
             media_type = enums.MessageMediaType.PAID_MEDIA
         elif isinstance(media, raw.types.MessageMediaToDo):
             media_type = enums.MessageMediaType.CHECKLIST
-            checklist = types.Checklist._parse(client, media, users, chats)
+            checklist = await types.Checklist._parse(client, media, users, chats)
 
         return MessageContent(
             type=media_type,

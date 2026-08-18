@@ -86,4 +86,4 @@ class CreateChatInviteLink:
             )
         )
 
-        return types.ChatInviteLink._parse(self, r)
+        return await types.ChatInviteLink._parse(self, r)

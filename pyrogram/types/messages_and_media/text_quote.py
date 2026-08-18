@@ -59,7 +59,7 @@ class TextQuote(Object):
         self.is_manual = is_manual
 
     @staticmethod
-    def _parse(
+    async def _parse(
         client: "pyrogram.Client",
         users: Dict[int, "raw.types.User"],
         reply_to: "raw.types.MessageReplyHeader"
@@ -69,7 +69,7 @@ class TextQuote(Object):
                 filter(
                     lambda x: x is not None,
                     [
-                        types.MessageEntity._parse(client, entity, users)
+                        await types.MessageEntity._parse(client, entity, users)
                         for entity in getattr(reply_to, "quote_entities", [])
                     ]
                 )

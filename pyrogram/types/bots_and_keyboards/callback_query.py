@@ -119,7 +119,7 @@ class CallbackQuery(Object, Update):
                     if channel:
                         message = types.Message(
                             id=message_id,
-                            chat=types.Chat._parse_chat(
+                            chat=await types.Chat._parse_chat(
                                 client,
                                 channel
                             )
@@ -158,7 +158,7 @@ class CallbackQuery(Object, Update):
 
         return CallbackQuery(
             id=str(callback_query.query_id),
-            from_user=types.User._parse(client, users[callback_query.user_id]),
+            from_user=await types.User._parse(client, users[callback_query.user_id]),
             message=message,
             inline_message_id=inline_message_id,
             chat_instance=str(callback_query.chat_instance) if hasattr(callback_query, "chat_instance") else None,

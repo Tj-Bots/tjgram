@@ -132,14 +132,14 @@ class GiveawayWinners(Object):
             pass
 
         return GiveawayWinners(
-            chat=types.Chat._parse_channel_chat(client, chats[giveaway_media.channel_id]),
+            chat=await types.Chat._parse_channel_chat(client, chats[giveaway_media.channel_id]),
             giveaway_message_id=giveaway_media.launch_msg_id,
             giveaway_message=giveaway_message,
             winners_selection_date=utils.timestamp_to_datetime(giveaway_media.until_date),
             quantity=giveaway_media.winners_count + giveaway_media.unclaimed_count,
             winner_count=giveaway_media.winners_count,
             unclaimed_prize_count=giveaway_media.unclaimed_count,
-            winners=types.List(types.User._parse(client, users.get(i)) for i in giveaway_media.winners) or None,
+            winners=types.List([await types.User._parse(client, users.get(i)) for i in giveaway_media.winners]) or None,
             additional_chat_count=getattr(giveaway_media, "additional_peers_count", None),
             prize_star_count=giveaway_media.stars,
             premium_subscription_month_count=getattr(giveaway_media, "months", None),

@@ -64,7 +64,7 @@ class BusinessConnection(Object):
         self.rights = rights
 
     @staticmethod
-    def _parse(
+    async def _parse(
         client,
         connection: Optional[Union["raw.types.BotBusinessConnection", "raw.types.UpdateBotBusinessConnect"]] = None,
         users = {}
@@ -77,7 +77,7 @@ class BusinessConnection(Object):
 
         return BusinessConnection(
             id=connection.connection_id,
-            user=types.User._parse(client, users.get(connection.user_id)),
+            user=await types.User._parse(client, users.get(connection.user_id)),
             dc_id=connection.dc_id,
             date=utils.timestamp_to_datetime(connection.date),
             is_enabled=not connection.disabled,

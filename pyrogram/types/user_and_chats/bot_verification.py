@@ -48,7 +48,7 @@ class BotVerification(Object):
         self.description = description
 
     @staticmethod
-    def _parse(
+    async def _parse(
         client,
         verification: "raw.types.BotVerification",
         users
@@ -57,7 +57,7 @@ class BotVerification(Object):
             return None
 
         return BotVerification(
-            bot=types.User._parse(client, users.get(verification.bot_id)),
+            bot=await types.User._parse(client, users.get(verification.bot_id)),
             custom_emoji_id=str(verification.icon),
             description=verification.description
         )

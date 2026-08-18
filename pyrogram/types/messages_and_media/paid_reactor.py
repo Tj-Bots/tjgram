@@ -64,7 +64,7 @@ class PaidReactor(Object):
         self.is_anonymous = is_anonymous
 
     @staticmethod
-    def _parse(
+    async def _parse(
         client: "pyrogram.Client",
         paid_reactor: Optional["raw.base.MessageReactor"],
         users: Dict[int, "raw.base.User"],
@@ -78,7 +78,7 @@ class PaidReactor(Object):
         )
 
         return PaidReactor(
-            sender=types.Chat._parse_chat(client, chat),
+            sender=await types.Chat._parse_chat(client, chat),
             star_count=paid_reactor.count,
             is_top=paid_reactor.top,
             is_me=paid_reactor.my,

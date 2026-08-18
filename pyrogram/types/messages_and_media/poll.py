@@ -184,7 +184,7 @@ class Poll(Object, Update):
             options.append(
                 types.PollOption(
                     persistent_id=answer.option.decode(),
-                    text=types.FormattedText._parse(client, answer.text),
+                    text=await types.FormattedText._parse(client, answer.text),
                     media=await types.MessageContent._parse(
                         client, answer.media, users=users, chats=chats
                     ) if answer.media else None,
@@ -192,7 +192,7 @@ class Poll(Object, Update):
                     vote_percentage=vote_percentages[i],
                     recent_voters=types.List(
                         [
-                            types.Chat._parse_chat(
+                            await types.Chat._parse_chat(
                                 client,
                                 users.get(
                                     utils.get_raw_peer_id(voter_peer)
@@ -204,10 +204,10 @@ class Poll(Object, Update):
                     )
                     if result and result.recent_voters
                     else None,
-                    added_by_user=types.User._parse(
+                    added_by_user=await types.User._parse(
                         client, users.get(utils.get_raw_peer_id(answer.added_by))
                     ),
-                    added_by_chat=types.Chat._parse_chat(
+                    added_by_chat=await types.Chat._parse_chat(
                         client, chats.get(utils.get_raw_peer_id(answer.added_by))
                     ),
                     addition_date=utils.datetime_to_timestamp(getattr(answer, "date", None)),
@@ -217,7 +217,7 @@ class Poll(Object, Update):
 
         return Poll(
             id=str(poll.id),
-            question=types.FormattedText._parse(client, poll.question),
+            question=await types.FormattedText._parse(client, poll.question),
             options=options,
             total_voter_count=media_poll.results.total_voters,
             is_closed=poll.closed,
@@ -229,7 +229,7 @@ class Poll(Object, Update):
             country_codes=poll.countries_iso2 or None,
             chosen_option_ids=chosen_option_ids or None,
             correct_option_ids=correct_option_ids or None,
-            explanation=types.FormattedText._parse(
+            explanation=await types.FormattedText._parse(
                 client,
                 raw.types.TextWithEntities(
                     text=poll_results.solution,
@@ -305,7 +305,7 @@ class Poll(Object, Update):
                     for option in update.options
                 ],
                 is_closed=False,
-                voter=types.User._parse(client, users[update.peer.user_id]),
+                voter=await types.User._parse(client, users[update.peer.user_id]),
                 client=client,
             )
 

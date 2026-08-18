@@ -149,15 +149,15 @@ class Folder(Object):
         excluded_chats = types.List()
 
         for peer in folder.pinned_peers:
-            pinned_chats.append(types.Chat._parse_dialog(client, peer, users, chats))
+            pinned_chats.append(await types.Chat._parse_dialog(client, peer, users, chats))
 
         for peer in folder.include_peers:
-            included_chats.append(types.Chat._parse_dialog(client, peer, users, chats))
+            included_chats.append(await types.Chat._parse_dialog(client, peer, users, chats))
 
         for peer in getattr(folder, "exclude_peers", []):
-            excluded_chats.append(types.Chat._parse_dialog(client, peer, users, chats))
+            excluded_chats.append(await types.Chat._parse_dialog(client, peer, users, chats))
 
-        name, entities = (utils.parse_text_with_entities(client, folder.title, {})).values()
+        name, entities = (await utils.parse_text_with_entities(client, folder.title, {})).values()
 
         return Folder(
             id=folder.id,

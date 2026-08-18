@@ -74,4 +74,4 @@ class TranslateMessageText:
             )
         )
 
-        return types.FormattedText._parse(self, r.result[0])
+        return await types.FormattedText._parse(self, r.result[0])

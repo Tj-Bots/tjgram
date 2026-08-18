@@ -58,4 +58,4 @@ class GetChatSettings:
         users = {i.id: i for i in r.users}
         chats = {i.id: i for i in r.chats}
 
-        return types.ChatSettings._parse(self, r.settings, users)
+        return await types.ChatSettings._parse(self, r.settings, users)

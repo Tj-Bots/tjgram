@@ -89,7 +89,7 @@ class GetForumTopicsByID:
         topics = types.List()
 
         for i in r.topics:
-            topics.append(types.ForumTopic._parse(self, i, users=users, chats=chats))
+            topics.append(await types.ForumTopic._parse(self, i, users=users, chats=chats))
 
         # A topic that does not exist comes back as `forumTopicDeleted`, never as a missing entry.
         return topics if is_iterable else topics[0]

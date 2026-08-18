@@ -92,7 +92,7 @@ class MessageEntity(Object):
         self.date_time_format = date_time_format
 
     @staticmethod
-    def _parse(client, entity: "raw.base.MessageEntity", users: dict) -> Optional["MessageEntity"]:
+    async def _parse(client, entity: "raw.base.MessageEntity", users: dict) -> Optional["MessageEntity"]:
         user_id = None
         unix_time = None
         date_time_format = None
@@ -134,7 +134,7 @@ class MessageEntity(Object):
             offset=entity.offset,
             length=entity.length,
             url=getattr(entity, "url", None),
-            user=types.User._parse(client, users.get(user_id, None)),
+            user=await types.User._parse(client, users.get(user_id, None)),
             language=getattr(entity, "language", None),
             custom_emoji_id=str(custom_emoji_id) if custom_emoji_id else None,
             expandable=getattr(entity, "collapsed", None),

@@ -255,7 +255,7 @@ async def parse_messages(
     return types.List(parsed_messages)
 
 
-def parse_deleted_messages(client, update, users, chats) -> List["types.Message"]:
+async def parse_deleted_messages(client, update, users, chats) -> List["types.Message"]:
     is_ephemeral = isinstance(update, raw.types.UpdateDeleteEphemeralMessages)
 
     messages = update.ids if is_ephemeral else update.messages
@@ -274,13 +274,13 @@ def parse_deleted_messages(client, update, users, chats) -> List["types.Message"
         chat_id = get_raw_peer_id(peer)
         if chat_id:
             if isinstance(peer, raw.types.PeerUser):
-                chat = types.Chat._parse_user_chat(client, users[chat_id])
+                chat = await types.Chat._parse_user_chat(client, users[chat_id])
 
             elif isinstance(peer, raw.types.PeerChat):
-                chat = types.Chat._parse_chat_chat(client, chats[chat_id])
+                chat = await types.Chat._parse_chat_chat(client, chats[chat_id])
 
             else:
-                chat = types.Chat._parse_channel_chat(
+                chat = await types.Chat._parse_channel_chat(
                     client, chats[chat_id]
                 )
 
@@ -662,12 +662,12 @@ def split_text(text: str, max_length: int = 4096) -> List[str]:
     return chunks
 
 
-def parse_text_with_entities(client, message: "raw.types.TextWithEntities", users):
+async def parse_text_with_entities(client, message: "raw.types.TextWithEntities", users):
     entities = types.List(
         filter(
             lambda x: x is not None,
             [
-                types.MessageEntity._parse(client, entity, users)
+                await types.MessageEntity._parse(client, entity, users)
                 for entity in getattr(message, "entities", [])
             ]
         )

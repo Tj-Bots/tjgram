@@ -80,6 +80,6 @@ class GetUsers:
         users = types.List()
 
         for i in r:
-            users.append(types.User._parse(self, i))
+            users.append(await types.User._parse(self, i))
 
         return users if is_iterable else users[0]

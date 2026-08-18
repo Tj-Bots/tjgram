@@ -44,4 +44,4 @@ class GetSuitableDiscussionChats:
             raw.functions.channels.GetGroupsForDiscussion()
         )
 
-        return types.List([types.Chat._parse_chat(self, i) for i in r.chats])
+        return types.List([await types.Chat._parse_chat(self, i) for i in r.chats])
