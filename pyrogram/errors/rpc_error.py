@@ -91,6 +91,7 @@ class RPCError(Exception):
     CODE: Optional[int] = None
     NAME: Optional[str] = None
     MESSAGE: str = "{value}"
+    VALUE_NAME: str = "value"
 
     def __init__(
         self,
@@ -101,7 +102,7 @@ class RPCError(Exception):
     ):
         code = f"-{self.CODE}" if is_signed else self.CODE
         name = self.ID or self.NAME
-        description = self.MESSAGE.format(value=value)
+        description = self.MESSAGE.format(**{self.VALUE_NAME: value})
         caused_by = f' (caused by "{rpc_name}")' if rpc_name else ""
         message = f"Telegram says: [{code} {name}] - {description}{caused_by}"
 

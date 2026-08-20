@@ -33,16 +33,9 @@ from pyrogram.errors import (
     RPCError,
     UnknownError
 )
+from tests.errors import RPC_NAME, raise_it
 
-RPC_NAME: Final[str] = "messages.GetHistory"
 ATTRIBUTES: Final[Tuple[str, ...]] = ("ID", "CODE", "NAME", "MESSAGE")
-
-
-def raise_it(code: int, *, message: str) -> None:
-    RPCError.raise_it(
-        raw.types.RpcError(error_code=code, error_message=message),
-        raw.functions.messages.GetHistory
-    )
 
 
 def attributes_of(error_type: Type[RPCError]) -> Dict[str, Union[int, str, None]]:
@@ -192,7 +185,7 @@ def test_value_can_also_hold_the_raw_error_object() -> None:
                 "ID": "FLOOD_WAIT_X",
                 "CODE": 420,
                 "NAME": "Flood",
-                "MESSAGE": "Please wait {value} seconds before repeating the action."
+                "MESSAGE": "Please wait {seconds} seconds before repeating the action."
             },
             id="a-generated-subclass-sets-all-of-them"
         )

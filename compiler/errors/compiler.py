@@ -20,6 +20,8 @@ import csv
 import os
 import re
 import shutil
+from dataclasses import dataclass
+from typing import List
 
 HOME = "compiler/errors"
 DEST = "pyrogram/errors/exceptions"
@@ -35,6 +37,31 @@ def snek(s):
 def caml(s):
     s = snek(s).split("_")
     return "".join([str(i.title()) for i in s])
+
+
+@dataclass(frozen=True)
+class SubClass:
+    name: str
+    error_id: str
+    message: str
+    value_name: str
+
+
+def value_property(template: str, *, value_name: str) -> str:
+    if value_name == "value":
+        return ""
+
+    # A blank line, then the block, appended to the `MESSAGE = __doc__` line the sub class template
+    # ends its body with. Spelled out here rather than left to whichever newlines the template file
+    # happens to begin and end with.
+    return "\n\n" + template.format(value_name=value_name).rstrip("\n")
+
+
+def typing_import(sub_classes: List[SubClass]) -> str:
+    if all(sub_class.value_name == "value" for sub_class in sub_classes):
+        return ""
+
+    return "from typing import Optional\n\n"
 
 
 def start():
@@ -94,13 +121,44 @@ def start():
 
                     error_id, error_message = row
 
-                    sub_class = caml(re.sub(r"_X", "_", error_id))
-                    sub_class = re.sub(r"^2", "Two", sub_class)
-                    sub_class = re.sub(r" ", "", sub_class)
+                    class_name = caml(re.sub(r"_X", "_", error_id))
+                    class_name = re.sub(r"^2", "Two", class_name)
+                    class_name = re.sub(r" ", "", class_name)
 
-                    f_all.write("        \"{}\": \"{}\",\n".format(error_id, sub_class))
+                    f_all.write("        \"{}\": \"{}\",\n".format(error_id, class_name))
 
-                    sub_classes.append((sub_class, error_id, error_message))
+                    # The placeholder in a message is what the value Telegram sends along with
+                    # the error means, so it is also the name the error exposes it under. A
+                    # message that still says "{value}" gets no property: `value` is the
+                    # attribute itself, and a property of that name would shadow it.
+                    #
+                    # The names are Telegram's own words for each value, from the descriptions in
+                    # https://corefork.telegram.org/api/errors.json, or the schema's word for the
+                    # same thing (`dc_id` is `auth.exportAuthorization.dc_id`, `file_part` is
+                    # `upload.saveFilePart.file_part`). Where Telethon already named one, the name
+                    # is theirs:
+                    # https://github.com/LonamiWebs/Telethon/blob/v1.36.0/telethon_generator/data/errors.csv
+                    #
+                    # One placeholder per message, at most. `RPCError.raise_it()` reads a single
+                    # number out of an error message and renders the message with it, so a second
+                    # placeholder could never be filled in - `str.format()` would raise `KeyError`
+                    # on the error nobody can catch.
+                    placeholders = re.findall(r"\{(\w*)\}", error_message)
+
+                    if len(placeholders) > 1:
+                        msg = "{} carries more than one placeholder: {}".format(error_id, error_message)
+                        raise ValueError(msg)
+
+                    value_name = placeholders[0] if placeholders else "value"
+
+                    sub_class = SubClass(
+                        name=class_name,
+                        error_id=error_id,
+                        message=error_message,
+                        value_name=value_name
+                    )
+
+                    sub_classes.append(sub_class)
 
                 with open("{}/template/class.txt".format(HOME), "r", encoding="utf-8") as f_class_template:
                     class_template = f_class_template.read()
@@ -108,17 +166,25 @@ def start():
                     with open("{}/template/sub_class.txt".format(HOME), "r", encoding="utf-8") as f_sub_class_template:
                         sub_class_template = f_sub_class_template.read()
 
+                    with open("{}/template/value_property.txt".format(HOME), "r", encoding="utf-8") as f_value_property_template:
+                        value_property_template = f_value_property_template.read()
+
                     class_template = class_template.format(
                         notice=notice,
+                        typing_import=typing_import(sub_classes),
                         super_class=super_class,
                         code=code,
                         docstring='"""{}"""'.format(name),
                         sub_classes="".join([sub_class_template.format(
-                            sub_class=k[0],
+                            sub_class=sub_class.name,
                             super_class=super_class,
-                            id="\"{}\"".format(k[1]),
-                            docstring='"""{}"""'.format(k[2])
-                        ) for k in sub_classes])
+                            id="\"{}\"".format(sub_class.error_id),
+                            docstring='"""{}"""'.format(sub_class.message),
+                            value_property=value_property(
+                                value_property_template,
+                                value_name=sub_class.value_name
+                            )
+                        ) for sub_class in sub_classes])
                     )
 
                 f_class.write(class_template)
