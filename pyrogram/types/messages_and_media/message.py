@@ -9257,11 +9257,12 @@ class Message(Object, Update):
 
     async def edit_text(
         self,
-        text: str,
+        text: Optional[str] = None,
         parse_mode: Optional["enums.ParseMode"] = None,
         entities: Optional[List["types.MessageEntity"]] = None,
         link_preview_options: Optional["types.LinkPreviewOptions"] = None,
         reply_markup: Optional["types.InlineKeyboardMarkup"] = None,
+        rich_message: Optional["types.InputRichMessage"] = None,
 
         show_caption_above_media: Optional[bool] = None,
         disable_web_page_preview: Optional[bool] = None,
@@ -9280,6 +9281,7 @@ class Message(Object, Update):
         Parameters:
             text (``str``):
                 New text of the message.
+                Required if ``rich_message`` isn't specified.
 
             parse_mode (:obj:`~pyrogram.enums.ParseMode`, *optional*):
                 By default, texts are parsed using both Markdown and HTML styles.
@@ -9293,6 +9295,10 @@ class Message(Object, Update):
 
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup`, *optional*):
                 An InlineKeyboardMarkup object.
+
+            rich_message (:obj:`~pyrogram.types.InputRichMessage`, *optional*):
+                New rich content of the message.
+                Required if ``text`` isn't specified.
 
         Returns:
             On success, the edited :obj:`~pyrogram.types.Message` is returned.
@@ -9309,6 +9315,7 @@ class Message(Object, Update):
             link_preview_options=link_preview_options,
             business_connection_id=self.business_connection_id,
             reply_markup=reply_markup,
+            rich_message=rich_message,
 
             show_caption_above_media=show_caption_above_media,
             disable_web_page_preview=disable_web_page_preview,
