@@ -63,3 +63,8 @@ Dev version
 ``` bash
 pip install https://github.com/tj-bots/tjgram/archive/dev.zip --force-reinstall
 ```
+
+### Acknowledgements
+
+tjgram is a fork of [Kurigram](https://github.com/KurimuzonAkuma/kurigram), itself a fork of [Pyrogram](https://github.com/pyrogram/pyrogram).
+Credit for the vast majority of this codebase goes to their respective authors and maintainers.
