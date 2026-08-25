@@ -30,7 +30,7 @@ from concurrent.futures.thread import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from hashlib import sha256
 from importlib import import_module
-from io import BytesIO, StringIO
+from io import BytesIO
 from mimetypes import MimeTypes
 from pathlib import Path
 from typing import AsyncIterator, Callable, List, Optional, Type, Union
@@ -63,7 +63,6 @@ from .connection import Connection
 from .connection.transport import TCP, TCPAbridged
 from .dispatcher import Dispatcher
 from .file_id import FileId, FileType, ThumbnailSource
-from .mime_types import mime_types
 from .parser import Parser
 from .session.internals import MsgId
 
@@ -273,7 +272,8 @@ class Client(Methods):
     MAX_TOPIC_CACHE_SIZE = 1000
 
     mimetypes = MimeTypes()
-    mimetypes.readfp(StringIO(mime_types))
+    with (Path(__file__).parent / "mime_types.txt").open(encoding="utf-8") as mime_types:
+        mimetypes.readfp(mime_types)
 
     def __init__(
         self,
