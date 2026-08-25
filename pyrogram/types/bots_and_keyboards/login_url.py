@@ -59,12 +59,13 @@ class LoginUrl(Object):
     """
 
     def __init__(
-        self, *,
+        self,
+        *,
         url: str,
         forward_text: Optional[str] = None,
         bot_username: Optional[str] = None,
         request_write_access: Optional[str] = None,
-        button_id: Optional[int] = None
+        button_id: Optional[int] = None,
     ):
         super().__init__()
 
@@ -75,19 +76,6 @@ class LoginUrl(Object):
         self.button_id = button_id
 
     @staticmethod
-    def read(b: "raw.types.KeyboardButtonUrlAuth") -> "LoginUrl":
-        return LoginUrl(
-            url=b.url,
-            forward_text=b.fwd_text,
-            button_id=b.button_id
-        )
+    def read(b: "raw.types.InlineButtonTypeUrlAuth") -> "LoginUrl":
+        return LoginUrl(url=b.url, forward_text=b.fwd_text, button_id=b.button_id)
 
-    def write(self, text: str, bot: "raw.types.InputUser", style: Optional["raw.types.KeyboardButtonStyle"] = None) -> "raw.types.InputKeyboardButtonUrlAuth":
-        return raw.types.InputKeyboardButtonUrlAuth(
-            text=text,
-            url=self.url,
-            bot=bot,
-            fwd_text=self.forward_text,
-            request_write_access=self.request_write_access,
-            style=style
-        )

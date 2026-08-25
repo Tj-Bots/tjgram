@@ -973,12 +973,15 @@ def pyrogram_api():
             PreCheckoutQuery
             ShippingAddress
             ShippingQuery
+            SwitchInlineQueryChosenChat
             MessageReactionUpdated
             MessageReactionCountUpdated
             ChatBoostUpdated
             ShippingOption
             PurchasedPaidMedia
             ChatShared
+            DisabledButton
+            CopyTextButton
             UsersShared
         """,
         bot_commands="""
