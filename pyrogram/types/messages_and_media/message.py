@@ -1363,7 +1363,7 @@ class Message(Object, Update):
         elif isinstance(action, raw.types.MessageActionChangeCommunity):
             if action.community_id:
                 service_type = enums.MessageServiceType.COMMUNITY_CHAT_ADDED
-                community_chat_added = types.CommunityChatAdded._parse(client, action, chats)
+                community_chat_added = await types.CommunityChatAdded._parse(client, action, chats)
             else:
                 service_type = enums.MessageServiceType.COMMUNITY_CHAT_REMOVED
                 community_chat_removed = types.CommunityChatRemoved()
