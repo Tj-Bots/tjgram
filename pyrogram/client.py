@@ -26,6 +26,7 @@ import re
 import shutil
 import sys
 import time
+from collections import OrderedDict
 from concurrent.futures.thread import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from hashlib import sha256
@@ -33,7 +34,7 @@ from importlib import import_module
 from io import BytesIO
 from mimetypes import MimeTypes
 from pathlib import Path
-from typing import AsyncIterator, Callable, List, Optional, Type, Union
+from typing import Any, AsyncIterator, Callable, List, Optional, Type, Union
 
 import pyrogram
 from pyrogram import __license__, __version__, enums, raw, utils
@@ -1547,18 +1548,37 @@ class Client(Methods):
 
 class Cache:
     def __init__(self, capacity: int):
+        if capacity <= 0:
+            raise ValueError("capacity must be greater than 0")
+
         self.capacity = capacity
-        self.store = {}
+        self._cache: OrderedDict[Any, Any] = OrderedDict()
+        self._lock = asyncio.Lock()
 
-    def __getitem__(self, key):
-        return self.store.get(key, None)
+    def __len__(self) -> int:
+        return len(self._cache)
 
-    def __setitem__(self, key, value):
-        if key in self.store:
-            del self.store[key]
+    def __contains__(self, key: Any) -> bool:
+        return key in self._cache
 
-        self.store[key] = value
+    def __bool__(self) -> bool:
+        return bool(self._cache)
 
-        if len(self.store) > self.capacity:
-            for _ in range(self.capacity // 2 + 1):
-                del self.store[next(iter(self.store))]
+    def __repr__(self) -> str:
+        return f"{type(self).__name__}(capacity={self.capacity}, size={len(self)})"
+
+    async def get(self, key: Any, default: Any = None) -> Any:
+        async with self._lock:
+            if key not in self._cache:
+                return default
+
+            self._cache.move_to_end(key)
+            return self._cache[key]
+
+    async def set(self, key: Any, value: Any) -> None:
+        async with self._lock:
+            self._cache[key] = value
+            self._cache.move_to_end(key)
+
+            if len(self._cache) > self.capacity:
+                self._cache.popitem(last=False)

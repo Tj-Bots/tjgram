@@ -106,7 +106,7 @@ class CallbackQuery(Object, Update):
             chat_id = utils.get_peer_id(callback_query.peer)
             message_id = callback_query.msg_id
 
-            message = client.message_cache[(chat_id, message_id)]
+            message = await client.message_cache.get((chat_id, message_id))
 
             if not message:
                 try:
