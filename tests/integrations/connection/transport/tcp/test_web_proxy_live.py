@@ -38,9 +38,9 @@ three ways:
    which is the only one of the three that exercises a fully encrypted MTProto
    session with its own salt, acknowledgements and update loop on top.
 
-Both run through TCPAbridged (plain secrets) or TCPIntermediatePadded
-(dd-prefixed secrets) unmodified - proxy={"scheme": "web", ...} is all that
-changes; see tcp.py's TCP._connect_via_web_proxy.
+All three run the stock transports unmodified - proxy={"scheme": "web", ...} is
+all that changes, and the secret picks the framing; see tcp.py's
+TCP._connect_via_web_proxy.
 
 Skipped unless the environment carries a relay to run against, which nobody
 but its operator has. Fill in .env.test from .env.test.example, then::
@@ -48,70 +48,19 @@ but its operator has. Fill in .env.test from .env.test.example, then::
     make test-integration
 """
 
-import asyncio
-import os
-import struct
-import time
-from dataclasses import dataclass
-from typing import Final, Type
+from typing import Type
 
 from pyrogram import Client
 from pyrogram.connection.proxy import WebProxy, normalize_proxy
 from pyrogram.connection.transport.tcp import TCP
 from pyrogram.session.auth import Auth
 
-from tests.integrations.connection.transport.tcp.conftest import RelayConfig
-
-_REQ_PQ_MULTI: Final[int] = 0xBE7E8EF1
-_RES_PQ: Final[int] = 0x05162463
-_RESPONSE_HEADER: Final[struct.Struct] = struct.Struct("<qQi")
-
-# The address `Auth` is handed is never dialed - the carrier reaches the DC
-#  through the relay - but the signature still requires a port.
-_MTPROTO_PORT: Final[int] = 443
-
-# An MTProto auth key is 2048 bits.
-_AUTH_KEY_SIZE: Final[int] = 256
-
-
-@dataclass(frozen=True)
-class _ReqPqMulti:
-    packet: bytes
-    nonce: bytes
-
-
-def _build_req_pq_multi() -> _ReqPqMulti:
-    """A hand-built, unencrypted req_pq_multi query - MTProto's very first
-    handshake step. No auth key exists yet, so this is the simplest possible
-    real message to round-trip for a genuine correctness check of the whole
-    transport.
-    """
-    nonce = os.urandom(16)
-    body = struct.pack("<I", _REQ_PQ_MULTI) + nonce
-
-    message_id = int(time.time() * 2 ** 32)
-    message_id -= message_id % 4  # low bits must be clear for a client message
-
-    packet = _RESPONSE_HEADER.pack(0, message_id, len(body)) + body
-
-    return _ReqPqMulti(packet=packet, nonce=nonce)
-
-
-async def _round_trip_req_pq_multi(transport: TCP) -> None:
-    query = _build_req_pq_multi()
-    await transport.send(query.packet)
-
-    response = await asyncio.wait_for(transport.recv(), timeout=15)
-    assert response is not None, "no response from the real DC through the WEB proxy carrier"
-
-    auth_key_id, _message_id, length = _RESPONSE_HEADER.unpack(response[:_RESPONSE_HEADER.size])
-    assert auth_key_id == 0, "expected an unencrypted resPQ, got an encrypted-looking reply"
-
-    body = response[_RESPONSE_HEADER.size:_RESPONSE_HEADER.size + length]
-    constructor = struct.unpack("<I", body[:4])[0]
-    assert constructor == _RES_PQ, f"expected resPQ (0x{_RES_PQ:x}), got 0x{constructor:x}"
-
-    assert body[4:20] == query.nonce, "resPQ echoed a different nonce than the one we sent"
+from tests.integrations.connection.transport.tcp.conftest import (
+    AUTH_KEY_SIZE,
+    MTPROTO_PORT,
+    RelayConfig,
+    round_trip_req_pq_multi,
+)
 
 
 async def test_req_pq_multi_round_trip_through_live_relay(
@@ -123,7 +72,7 @@ async def test_req_pq_multi_round_trip_through_live_relay(
 
     try:
         await transport.connect(("unused", 0))
-        await _round_trip_req_pq_multi(transport)
+        await round_trip_req_pq_multi(transport)
     finally:
         await transport.close()
 
@@ -145,7 +94,7 @@ async def test_string_link_form_connects_through_live_relay(
 
     try:
         await transport.connect(("unused", 0))
-        await _round_trip_req_pq_multi(transport)
+        await round_trip_req_pq_multi(transport)
     finally:
         await transport.close()
 
@@ -158,12 +107,12 @@ async def test_full_auth_key_exchange_through_live_relay(
         unauthorized_client,
         dc_id=relay_config.dc_id,
         server_address="unused",
-        port=_MTPROTO_PORT,
+        port=MTPROTO_PORT,
         test_mode=False,
     ).create()
 
     assert isinstance(auth_key, bytes)
-    assert len(auth_key) == _AUTH_KEY_SIZE
+    assert len(auth_key) == AUTH_KEY_SIZE
 
 
 async def test_high_level_api_call_through_live_relay(client: Client) -> None:

@@ -20,6 +20,7 @@ import hashlib
 import logging
 import os
 import socket
+import time
 from concurrent.futures import ThreadPoolExecutor
 from typing import ClassVar, Dict, Final, NamedTuple, Optional, Tuple
 
@@ -28,9 +29,24 @@ from python_socks import ProxyType
 from python_socks.async_.asyncio import Proxy as SocksProxy
 
 from pyrogram import utils
-from pyrogram.connection.proxy import HTTPProxy, MTProxy, Proxy, SOCKS4Proxy, SOCKS5Proxy, WebProxy
+from pyrogram.connection.proxy import (
+    MARKED_SECRET_SIZE,
+    OBFUSCATED2_SECRET_SIZE,
+    HTTPProxy,
+    MTProxy,
+    Proxy,
+    SOCKS4Proxy,
+    SOCKS5Proxy,
+    WebProxy,
+    uses_random_padding,
+)
+from pyrogram.connection.transport.tcp.faketls_records import (
+    GREETING_RESPONSE_PREFIXES,
+    RECORD_LENGTH_SIZE,
+    FakeTlsRecords,
+)
 from pyrogram.connection.transport.tcp.web_proxy_carrier import WebCarrierError, WebProxyCarrier
-from pyrogram.crypto import aes
+from pyrogram.crypto import aes, faketls
 from pyrogram.enums import ProxyScheme
 
 log = logging.getLogger(__name__)
@@ -41,23 +57,26 @@ log = logging.getLogger(__name__)
 #  so what the relay's locally-configured stock MTProxy expects over the WEB
 #  proxy carrier.
 
+# The first four bytes a nonce must not open with, read off TDLib's own loop.
+#  The two repeated bytes are framing tags and `16 03 01 02` is a TLS
+#  ClientHello record; the four verbs are the ones stock MTProxy hands to its
+#  HTTP fallback, so a nonce opening with one would be answered as a web request.
+#  https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/TcpTransport.cpp#L99-L101
+#  https://github.com/TelegramMessenger/MTProxy/blob/f36d8af769ffaeac36978d38c2c0f6d1104c2137/net/net-tcp-rpc-ext-server.c#L1065
 _OBFUSCATED2_RESERVED_PREFIXES: Final[Tuple[bytes, ...]] = (
     b"HEAD",
     b"POST",
     b"GET ",
     b"OPTI",
+    b"\xdd\xdd\xdd\xdd",
     b"\xee\xee\xee\xee",
+    b"\x16\x03\x01\x02",
 )
 
 # The 4-byte tag written at nonce[56:60], by which stock MTProxy recognizes the
 #  packet framing that follows.
 ABRIDGED_OBFUSCATE_TAG: Final[bytes] = b"\xef\xef\xef\xef"
 INTERMEDIATE_PADDED_OBFUSCATE_TAG: Final[bytes] = b"\xdd\xdd\xdd\xdd"
-
-# The obfuscated2 secret is the bare AES key, and a dd-prefixed one carries a
-#  marker byte in front of it.
-_OBFUSCATED2_SECRET_SIZE: Final[int] = 16
-_DD_SECRET_SIZE: Final[int] = _OBFUSCATED2_SECRET_SIZE + 1
 
 _OBFUSCATE_TAG_SIZE: Final[int] = 4
 
@@ -102,8 +121,8 @@ class Obfuscated2Header(NamedTuple):
 
 def build_obfuscated2_header(secret: bytes, *, dc_id: int, obfuscate_tag: bytes) -> Obfuscated2Header:
     # secret is the bare key - callers strip any 0xDD marker first.
-    if len(secret) != _OBFUSCATED2_SECRET_SIZE:
-        msg = f"obfuscated2: secret must be exactly {_OBFUSCATED2_SECRET_SIZE} bytes, got {len(secret)}"
+    if len(secret) != OBFUSCATED2_SECRET_SIZE:
+        msg = f"obfuscated2: secret must be exactly {OBFUSCATED2_SECRET_SIZE} bytes, got {len(secret)}"
         raise ValueError(msg)
 
     if len(obfuscate_tag) != _OBFUSCATE_TAG_SIZE:
@@ -148,8 +167,8 @@ class TCP:
     ) -> None:
         self.ipv6 = ipv6
         self.proxy = proxy
-        # Needed only for the WEB proxy scheme, which routes by relay
-        #  hostname rather than DC address and embeds this in its handshake.
+        # Required by every obfuscated2 scheme - classic MTProxy as much as WEB -
+        #  because the dc id is one of the fields the obfuscated2 header carries.
         #  Connection passes the already-shifted protocol dc id (media/test
         #  mode folded in), not the bare logical one.
         self.dc_id = dc_id
@@ -171,6 +190,7 @@ class TCP:
             self.loop = utils.get_event_loop()
 
         self._web_carrier: Optional[WebProxyCarrier] = None
+        self._records: Optional[FakeTlsRecords] = None
         self._encrypt: Optional[CipherArgs] = None
         self._decrypt: Optional[CipherArgs] = None
 
@@ -178,27 +198,47 @@ class TCP:
     def is_web_proxy(self) -> bool:
         return isinstance(self.proxy, WebProxy)
 
-    async def _connect_via_web_proxy(self) -> None:
-        web_proxy: WebProxy = self.proxy
+    @property
+    def opens_with_obfuscated2_header(self) -> bool:
+        # Both schemes open the stream with a 64-byte obfuscated2 header that
+        #  already carries OBFUSCATE_TAG, so a framing subclass must not send the
+        #  bare tag on top of it.
+        return isinstance(self.proxy, (WebProxy, MTProxy))
 
+    def _obfuscated2_secret(self, secret: bytes) -> bytes:
+        # Returns the bare key, and first checks the three things every
+        #  obfuscated2 handshake needs from the transport. Shared by both schemes
+        #  that speak it, so neither can drift from the other on what it accepts.
         if self.dc_id is None:
-            msg = "The WEB proxy scheme requires a dc_id, passed through by Connection"
+            msg = "An obfuscated2 proxy scheme requires a dc_id, passed through by Connection"
             raise ValueError(msg)
 
         if not self.OBFUSCATE_TAG:
             msg = (
-                f"{type(self).__name__} has no OBFUSCATE_TAG and cannot be used over a WEB "
-                f"proxy; use e.g. TCPAbridged for a plain secret, TCPIntermediatePadded for dd"
+                f"{type(self).__name__} has no OBFUSCATE_TAG and cannot speak obfuscated2; use "
+                f"e.g. TCPAbridged for a plain secret, TCPIntermediatePadded for dd"
             )
             raise ValueError(msg)
 
-        is_dd_secret = len(web_proxy.secret) == _DD_SECRET_SIZE
-
-        if is_dd_secret and self.OBFUSCATE_TAG != INTERMEDIATE_PADDED_OBFUSCATE_TAG:
-            msg = f"dd-prefixed secrets require TCPIntermediatePadded, not {type(self).__name__}"
+        # A dd or ee secret asks for random padding, and the padded intermediate
+        #  transport is the only one that sends any. `Connection` picks that class
+        #  on its own, so reaching this means the transport was built by hand.
+        if uses_random_padding(self.proxy) and self.OBFUSCATE_TAG != INTERMEDIATE_PADDED_OBFUSCATE_TAG:
+            msg = (
+                f"this proxy's secret asks for random padding, which {type(self).__name__} "
+                f"does not send; use TCPIntermediatePadded"
+            )
             raise ValueError(msg)
 
-        bare_secret = web_proxy.secret[1:] if is_dd_secret else web_proxy.secret
+        if len(secret) == MARKED_SECRET_SIZE:
+            return secret[1:]
+
+        return secret
+
+    async def _connect_via_web_proxy(self) -> None:
+        web_proxy: WebProxy = self.proxy
+
+        bare_secret = self._obfuscated2_secret(web_proxy.secret)
 
         log.info("Connecting to WEB proxy relay %s (dc_id=%s)", web_proxy.hostname, self.dc_id)
 
@@ -292,9 +332,11 @@ class TCP:
 
         self.reader, self.writer = await asyncio.open_connection(sock=sock)
 
-    async def _connect_via_direct(self, destination: Tuple[str, int]) -> None:
+    async def _connect_via_direct(self, destination: Tuple[str, int], *, family: Optional[int] = None) -> None:
         host, port = destination
-        family = socket.AF_INET6 if self.ipv6 else socket.AF_INET
+
+        if family is None:
+            family = socket.AF_INET6 if self.ipv6 else socket.AF_INET
 
         log.info("Connecting to %s:%s", host, port)
 
@@ -315,14 +357,80 @@ class TCP:
 
         log.info("Connection established")
 
+    async def _connect_via_mtproxy(self) -> None:
+        mtproxy: MTProxy = self.proxy
+
+        bare_secret = self._obfuscated2_secret(mtproxy.secret)
+
+        # The proxy sits at its own address, unrelated to the DC address self.ipv6
+        #  was derived from, so let getaddrinfo pick the family it actually has.
+        await self._connect_via_direct((mtproxy.hostname, mtproxy.port), family=socket.AF_UNSPEC)
+
+        built = build_obfuscated2_header(bare_secret, dc_id=self.dc_id, obfuscate_tag=self.OBFUSCATE_TAG)
+
+        if mtproxy.sni_hostname is None:
+            # Written straight to the socket: self.send() is the framing subclass's
+            #  override, and TCP.send() would encrypt the header under the very keys
+            #  the header is delivering.
+            self.writer.write(built.header)
+            await self.writer.drain()
+        else:
+            await self._greet_fake_tls_proxy(domain=mtproxy.sni_hostname, secret=bare_secret)
+            self._records = FakeTlsRecords(self._recv_from_socket, prologue=built.header)
+
+        self._encrypt = built.encrypt
+        self._decrypt = built.decrypt
+
+    async def _greet_fake_tls_proxy(self, *, domain: str, secret: bytes) -> None:
+        # The local clock, where TDLib uses one corrected against the server: the
+        #  correction lives in Session, which does not exist yet at connect time.
+        #  A proxy accepts a skew of hours, so this only matters on a broken clock.
+        hello = faketls.build_client_hello(domain=domain, secret=secret, unix_time=int(time.time()))
+
+        log.info("Greeting the fake-TLS MTProxy as %s", domain)
+
+        self.writer.write(hello.record)
+        await self.writer.drain()
+
+        response = await self._read_greeting_response()
+
+        if not faketls.server_hello_is_authentic(response, secret=secret, client_random=hello.random):
+            msg = f"fake-TLS: {domain} answered the greeting without knowing the proxy secret"
+            raise OSError(msg)
+
+        log.info("Fake-TLS greeting answered")
+
+    async def _read_greeting_response(self) -> bytes:
+        response = bytearray()
+
+        for prefix in GREETING_RESPONSE_PREFIXES:
+            head = await self._recv_from_socket(len(prefix) + RECORD_LENGTH_SIZE)
+
+            if head is None or head[: len(prefix)] != prefix:
+                msg = "fake-TLS: the greeting was not answered with a ServerHello"
+                raise OSError(msg)
+
+            body = await self._recv_from_socket(int.from_bytes(head[-RECORD_LENGTH_SIZE:], "big"))
+
+            if body is None:
+                msg = "fake-TLS: the connection closed inside the ServerHello"
+                raise OSError(msg)
+
+            response += head + body
+
+        # Hashed exactly as it arrived, both segments together, the way TDLib
+        #  hashes the span it consumed.
+        #  https://github.com/tdlib/td/blob/d1085f9cebc5a62379991ae1652673954f229c1f/td/mtproto/TlsInit.cpp#L636-L644
+        return bytes(response)
+
     async def _connect(self, destination: Tuple[str, int]) -> None:
         if self.is_web_proxy:
             await self._connect_via_web_proxy()
             return
 
         if isinstance(self.proxy, MTProxy):
-            msg = "Classic MTProxy (scheme='mtproxy') is not implemented yet."
-            raise NotImplementedError(msg)
+            await self._connect_via_mtproxy()
+            return
 
         if self.proxy is not None:
             await self._connect_via_proxy(destination)
@@ -331,6 +439,14 @@ class TCP:
         await self._connect_via_direct(destination)
 
     async def connect(self, address: Tuple[str, int]) -> None:
+        # Every step of the WEB handshake is already bounded by the carrier's own
+        #  timeouts, and they add up well past `TCP.TIMEOUT`: at 10s the relay
+        #  never reaches the WELCOME that `_WELCOME_TIMEOUT` waits 30s for, so
+        #  the outer guard can only cut a working handshake short.
+        if self.is_web_proxy:
+            await self._connect(address)
+            return
+
         try:
             await asyncio.wait_for(self._connect(address), timeout=TCP.TIMEOUT)
         except asyncio.TimeoutError:  # Re-raise as TimeoutError. asyncio.TimeoutError is deprecated in 3.11
@@ -388,6 +504,9 @@ class TCP:
                 if self._web_carrier is not None:
                     await self._web_carrier.send(data)
                 else:
+                    if self._records is not None:
+                        data = self._records.wrap(data)
+
                     self.writer.write(data)
                     await self.writer.drain()
                 log.debug("Send complete")
@@ -398,6 +517,8 @@ class TCP:
     async def recv(self, length: int = 0) -> Optional[bytes]:
         if self._web_carrier is not None:
             data = await self._web_carrier.recv(length)
+        elif self._records is not None:
+            data = await self._records.recv(length)
         else:
             data = await self._recv_from_socket(length)
 

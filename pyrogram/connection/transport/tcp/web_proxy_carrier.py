@@ -28,6 +28,8 @@ from enum import IntEnum
 from http import HTTPStatus
 from typing import Coroutine, Dict, Final, FrozenSet, List, Optional, Set
 
+from pyrogram.connection.proxy import HTTPS_PORT
+
 log = logging.getLogger(__name__)
 
 
@@ -171,7 +173,6 @@ def derive_bridge_capability(hostname: str, *, secret: bytes) -> str:
 #  /api/v1/session* API. `TCP._connect_via_web_proxy` layers the actual MTProxy
 #  obfuscation on top of it.
 
-_HTTPS_PORT: Final[int] = 443
 _CONNECT_TIMEOUT: Final[int] = 10
 _REQUEST_TIMEOUT: Final[int] = 10
 _LONG_POLL_WAIT: Final[int] = 25
@@ -480,7 +481,7 @@ class WebProxyCarrier:
         hostname: str,
         *,
         secret: bytes,
-        port: int = _HTTPS_PORT,
+        port: int = HTTPS_PORT,
         loop: Optional[asyncio.AbstractEventLoop] = None,
     ) -> None:
         self._hostname = hostname
@@ -624,7 +625,10 @@ class WebProxyCarrier:
         # Granted where the bytes leave for the MTProto engine above, which is
         #  the drain point §7 ties downlink credit to - not where they arrive
         #  off the wire.
-        if amount <= 0 or self._fail_exc is not None:
+        #  `_closed` is checked because `recv()` still serves whatever the buffer
+        #  holds after `close()`, and a grant task started then is never
+        #  cancelled: `close()` has already walked `_background_tasks`.
+        if amount <= 0 or self._closed or self._fail_exc is not None:
             return
 
         self._pending_grant += amount
@@ -667,6 +671,29 @@ class WebProxyCarrier:
     def _track(self, task: "asyncio.Task") -> None:
         self._background_tasks.add(task)
         task.add_done_callback(self._background_tasks.discard)
+        task.add_done_callback(self._log_task_exception)
+
+    def _log_task_exception(self, task: "asyncio.Task") -> None:
+        # Nothing awaits a tracked task, so asyncio would print its traceback at
+        #  collection. Retrieving it here silences that, which makes this the
+        #  only report the failure gets - so the level has to say whether
+        #  anything else will carry it.
+        if task.cancelled():
+            return
+
+        exception = task.exception()
+
+        if exception is None:
+            return
+
+        # `_fail_exc` set means the carrier recorded this and the next `send()`
+        #  or `recv()` raises it at the caller; anything the task raised past
+        #  that never reached `_fail`, so this line is all there will ever be.
+        if self._fail_exc is None:
+            log.error("WEB proxy: background task failed with nothing to report it: %s", exception)
+            return
+
+        log.debug("WEB proxy: background task failed: %s", exception)
 
     def _track_task(self, coroutine: "Coroutine[None, None, None]") -> None:
         self._track(self._loop.create_task(coroutine))
