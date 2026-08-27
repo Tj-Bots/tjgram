@@ -39,10 +39,6 @@ class RecoverGaps:
     ) -> Tuple[int, int]:
         """Restores updates for the time while the client was offline.
 
-        .. note::
-
-            To use this method, you must set the ``Client.skip_updates`` parameter to False, otherwise updates state saving and recovery will not work.
-
         .. include:: /_includes/usable-by/users-bots.rst
 
         Parameters:
@@ -55,10 +51,6 @@ class RecoverGaps:
         """
         message_updates_counter = 0
         other_updates_counter = 0
-
-        if self.skip_updates:
-            log.debug("Recover gaps disabled in client params. Skipping recovery")
-            return (message_updates_counter, other_updates_counter)
 
         states = await self.storage.get_update_states(ids)
 

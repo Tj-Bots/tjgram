@@ -468,7 +468,9 @@ class Client(Methods):
 
             if datetime.now() - self.last_update_time > timedelta(seconds=self.UPDATES_WATCHDOG_INTERVAL):
                 await self.invoke(raw.functions.updates.GetState())
-                await self.recover_gaps()
+
+                if not self.skip_updates:
+                    await self.recover_gaps()
 
     async def authorize(self) -> User:
         if self.bot_token:
