@@ -22,12 +22,12 @@ import sqlite3
 import struct
 import time
 from pathlib import Path
-from typing import Any, List, Optional, Tuple
+from typing import Any, Iterable, List, Optional, Tuple, Union
 
 from pyrogram import raw
 
 from .. import utils
-from .storage import Storage
+from .storage import Storage, UpdateState
 
 log = logging.getLogger(__name__)
 
@@ -114,11 +114,7 @@ CREATE TABLE update_state
 );
 """
 
-TEST = {
-    1: "149.154.175.10",
-    2: "149.154.167.40",
-    3: "149.154.175.117"
-}
+TEST = {1: "149.154.175.10", 2: "149.154.167.40", 3: "149.154.175.117"}
 
 PROD = {
     1: "149.154.175.53",
@@ -126,25 +122,20 @@ PROD = {
     3: "149.154.175.100",
     4: "149.154.167.91",
     5: "91.108.56.130",
-    203: "91.105.192.100"
+    203: "91.105.192.100",
 }
 
+
 def get_input_peer(peer_id: int, access_hash: int, peer_type: str):
-    if peer_type in ["user", "bot"]:
-        return raw.types.InputPeerUser(
-            user_id=peer_id,
-            access_hash=access_hash
-        )
+    if peer_type in {"user", "bot"}:
+        return raw.types.InputPeerUser(user_id=peer_id, access_hash=access_hash)
 
     if peer_type == "group":
-        return raw.types.InputPeerChat(
-            chat_id=-peer_id
-        )
+        return raw.types.InputPeerChat(chat_id=-peer_id)
 
-    if peer_type in ["direct", "channel", "forum", "supergroup", "community"]:
+    if peer_type in {"direct", "channel", "forum", "supergroup", "community"}:
         return raw.types.InputPeerChannel(
-            channel_id=utils.get_channel_id(peer_id),
-            access_hash=access_hash
+            channel_id=utils.get_channel_id(peer_id), access_hash=access_hash
         )
 
     raise ValueError(f"Invalid peer type: {peer_type}")
@@ -163,9 +154,8 @@ class SQLiteStorage(Storage):
         in_memory: Optional[bool] = False,
         use_wal: Optional[bool] = False,
     ):
-        super().__init__(name)
-
-        self.conn = None # type: sqlite3.Connection
+        self.name = name
+        self.conn = None  # type: sqlite3.Connection
 
         self.session_string = session_string
         self.in_memory = in_memory
@@ -327,32 +317,84 @@ class SQLiteStorage(Storage):
         if not self.in_memory:
             Path(self.database).unlink()
 
-    async def update_peers(self, peers: List[Tuple[int, int, str, str]]):
+    async def update_peers(self, peers: Iterable[Tuple[int, int, str, Optional[str]]]):
         self.conn.executemany(
             "REPLACE INTO peers (id, access_hash, type, phone_number) VALUES (?, ?, ?, ?)", peers
         )
 
-    async def update_usernames(self, usernames: List[Tuple[int, List[str]]]):
-        self.conn.executemany("DELETE FROM usernames WHERE id = ?", [(id,) for id, _ in usernames])
+    async def update_usernames(self, usernames: Iterable[Tuple[int, List[Optional[str]]]]):
+        usernames = list(usernames)
+
+        if not usernames:
+            return
+
+        ids = [id_ for id_, _ in usernames]
+        placeholders = ", ".join("?" for _ in ids)
+
+        self.conn.execute(
+            f"DELETE FROM usernames WHERE id IN ({placeholders})",
+            ids,
+        )
 
         self.conn.executemany(
             "REPLACE INTO usernames (id, username) VALUES (?, ?)",
-            [(id, username) for id, usernames in usernames for username in usernames],
+            [
+                (id_, username)
+                for id_, names in usernames
+                for username in names
+                if username is not None
+            ],
         )
 
-    async def update_state(self, value: Tuple[int, int, int, int, int] = object):
-        if value is object:
-            return self.conn.execute(
-                "SELECT id, pts, qts, date, seq FROM update_state ORDER BY date ASC"
-            ).fetchall()
+    async def get_update_states(self, ids: Optional[Union[int, Iterable[int]]] = None):
+        query = "SELECT id, pts, qts, date, seq FROM update_state"
+
+        if ids is not None:
+            state_ids = (ids,) if isinstance(ids, int) else tuple(ids)
+
+            if not state_ids:
+                return []
+
+            placeholders = ", ".join("?" for _ in state_ids)
+            query += f" WHERE id IN ({placeholders})"
         else:
-            if isinstance(value, int):
-                self.conn.execute("DELETE FROM update_state WHERE id = ?", (value,))
-            else:
-                self.conn.execute(
-                    "REPLACE INTO update_state (id, pts, qts, date, seq) VALUES (?, ?, ?, ?, ?)",
-                    value,
-                )
+            state_ids = ()
+
+        rows = self.conn.execute(query + " ORDER BY date ASC", state_ids).fetchall()
+        return [UpdateState(*row) for row in rows]
+
+    async def set_update_state(self, update_state: Union[UpdateState, Iterable[UpdateState]]):
+        states = [update_state] if isinstance(update_state, UpdateState) else update_state
+
+        self.conn.executemany(
+            "INSERT INTO update_state (id, pts, qts, date, seq) VALUES (?, ?, ?, ?, ?) "
+            "ON CONFLICT(id) DO UPDATE SET "
+            "pts = COALESCE(excluded.pts, update_state.pts), "
+            "qts = COALESCE(excluded.qts, update_state.qts), "
+            "date = COALESCE(excluded.date, update_state.date), "
+            "seq = COALESCE(excluded.seq, update_state.seq)",
+            [(state.id, state.pts, state.qts, state.date, state.seq) for state in states],
+        )
+
+    async def delete_update_state(self, state_id):
+        if isinstance(state_id, int):
+            self.conn.execute(
+                "DELETE FROM update_state WHERE id = ?",
+                (state_id,),
+            )
+            return
+
+        state_ids = tuple(state_id)
+
+        if not state_ids:
+            return
+
+        placeholders = ", ".join("?" for _ in state_ids)
+
+        self.conn.execute(
+            f"DELETE FROM update_state WHERE id IN ({placeholders})",
+            state_ids,
+        )
 
     async def get_peer_by_id(self, peer_id: int):
         r = self.conn.execute(
@@ -399,7 +441,11 @@ class SQLiteStorage(Storage):
             self.conn.execute(f"UPDATE {table} SET {attr} = ?", (value,))
 
     async def _accessor(self, table: str, attr: str, value: Any = object):
-        return await self._get(table, attr) if value is object else await self._set(table, attr, value)
+        return (
+            await self._get(table, attr)
+            if value is object
+            else await self._set(table, attr, value)
+        )
 
     async def dc_id(self, value: int = object):
         return await self._accessor("sessions", "dc_id", value)

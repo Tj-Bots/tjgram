@@ -56,7 +56,7 @@ from pyrogram.handlers.handler import Handler
 from pyrogram.methods import Methods
 from pyrogram.qrlogin import QRLogin
 from pyrogram.session import Auth, Session
-from pyrogram.storage import SQLiteStorage, Storage
+from pyrogram.storage import SQLiteStorage, Storage, UpdateState
 from pyrogram.types import LinkPreviewOptions, TermsOfService, User
 from pyrogram.utils import ainput
 
@@ -831,15 +831,18 @@ class Client(Methods):
 
                 pts = getattr(update, "pts", None)
                 pts_count = getattr(update, "pts_count", None)
+                qts = getattr(update, "qts", None)
 
-                if pts:
-                    await self.storage.update_state(
-                        (
-                            utils.get_channel_id(channel_id) if channel_id else 0,
+                if pts is not None or qts is not None:
+                    state_id = utils.get_channel_id(channel_id) if channel_id else 0
+
+                    await self.storage.set_update_state(
+                        UpdateState(
+                            state_id,
                             pts,
+                            qts,
                             None,
-                            updates.date,
-                            updates.seq
+                            None,
                         )
                     )
 
@@ -873,15 +876,13 @@ class Client(Methods):
                                 chats.update({c.id: c for c in diff.chats})
 
                 self.dispatcher.updates_queue.put_nowait((update, users, chats))
+
+            await self.storage.set_update_state(
+                UpdateState(0, None, None, updates.date, updates.seq)
+            )
         elif isinstance(updates, (raw.types.UpdateShortMessage, raw.types.UpdateShortChatMessage)):
-            await self.storage.update_state(
-                (
-                    0,
-                    updates.pts,
-                    None,
-                    updates.date,
-                    None
-                )
+            await self.storage.set_update_state(
+                UpdateState(0, updates.pts, None, updates.date, None)
             )
 
             diff = await self.invoke(
@@ -892,19 +893,22 @@ class Client(Methods):
                 )
             )
 
-            if diff.new_messages:
+            users = {u.id: u for u in diff.users}
+            chats = {c.id: c for c in diff.chats}
+
+            for message in diff.new_messages:
                 self.dispatcher.updates_queue.put_nowait((
                     raw.types.UpdateNewMessage(
-                        message=diff.new_messages[0],
+                        message=message,
                         pts=updates.pts,
                         pts_count=updates.pts_count
                     ),
-                    {u.id: u for u in diff.users},
-                    {c.id: c for c in diff.chats}
+                    users,
+                    chats
                 ))
-            else:
-                if diff.other_updates:  # The other_updates list can be empty
-                    self.dispatcher.updates_queue.put_nowait((diff.other_updates[0], {}, {}))
+
+            for update in diff.other_updates:
+                self.dispatcher.updates_queue.put_nowait((update, users, chats))
         elif isinstance(updates, raw.types.UpdateShort):
             self.dispatcher.updates_queue.put_nowait((updates.update, {}, {}))
         elif isinstance(updates, raw.types.UpdatesTooLong):
