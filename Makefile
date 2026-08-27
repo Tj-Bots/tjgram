@@ -1,4 +1,10 @@
 VENV := venv
+
+# The live tests take every parameter from the environment. `.env.test` is the
+#  git-ignored file that carries them locally; the runner loads it so nothing
+#  under `tests/` has to read a file of its own. Absent, the tests skip by name.
+ENV_TEST := .env.test
+LOAD_ENV_TEST := set -a; if [ -f $(ENV_TEST) ]; then . ./$(ENV_TEST); fi; set +a;
 PYTHON := $(VENV)/bin/python
 PIP := $(PYTHON) -m pip
 TAG = v$(shell grep -E '__version__ = ".*"' pyrogram/__init__.py | cut -d\" -f2)
@@ -12,7 +18,7 @@ BLUE   := \033[0;34m
 BOLD   := \033[1m
 RESET  := \033[0m
 
-.PHONY: venv venv-docs clean-venv clean-build clean-api clean-docs clean api docs docs-archive build tag dtag
+.PHONY: venv venv-dev venv-docs clean-venv clean-build clean-api clean-docs clean api docs docs-archive build tag dtag test test-unit test-integration
 
 venv:
 	@if [ ! -d "$(VENV)" ]; then \
@@ -22,6 +28,15 @@ venv:
 
 	$(PIP) install -U -e .
 	@printf "$(YELLOW)Created venv with %s$(RESET)\n" "$$($(PYTHON) --version)"
+
+venv-dev:
+	@if [ ! -d "$(VENV)" ]; then \
+		python3 -m venv $(VENV); \
+		$(PIP) install -U pip wheel setuptools; \
+	fi
+
+	$(PIP) install -U -e .[dev]
+	@printf "$(YELLOW)Created dev venv with %s$(RESET)\n" "$$($(PYTHON) --version)"
 
 venv-docs:
 	@if [ ! -d "$(VENV)" ]; then \
@@ -61,6 +76,16 @@ docs:
 
 docs-archive:
 	cd docs/build/html && zip -r ../docs.zip ./
+
+# `make venv` installs the package alone, so the runner needs `make venv-dev` first.
+test:
+	@$(LOAD_ENV_TEST) $(PYTHON) -m pytest
+
+test-unit:
+	$(PYTHON) -m pytest -m 'not integration'
+
+test-integration:
+	@$(LOAD_ENV_TEST) $(PYTHON) -m pytest -m integration
 
 build:
 	hatch build

@@ -20,11 +20,11 @@ import asyncio
 import logging
 import os
 from struct import pack, unpack
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple
 
+from pyrogram.connection.proxy import Proxy
+from pyrogram.connection.transport.tcp.tcp import TCP
 from pyrogram.crypto import aes
-
-from .tcp import TCP, ProxyDict
 
 log = logging.getLogger(__name__)
 
@@ -35,11 +35,12 @@ class TCPIntermediateO(TCP):
     def __init__(
         self,
         ipv6: bool,
-        proxy: Union[str, ProxyDict, None] = None,
+        proxy: Optional[Proxy] = None,
         crypto_executor_workers: int = 1,
         loop: Optional[asyncio.AbstractEventLoop] = None,
+        dc_id: Optional[int] = None,
     ) -> None:
-        super().__init__(ipv6, proxy, crypto_executor_workers, loop)
+        super().__init__(ipv6, proxy, crypto_executor_workers, loop, dc_id=dc_id)
 
         self.encrypt = None
         self.decrypt = None
