@@ -17,7 +17,7 @@
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-from typing import Tuple
+from typing import Iterable, Optional, Tuple, Union
 
 import pyrogram
 from pyrogram import raw
@@ -34,7 +34,9 @@ log = logging.getLogger(__name__)
 
 
 class RecoverGaps:
-    async def recover_gaps(self: "pyrogram.Client") -> Tuple[int, int]:
+    async def recover_gaps(
+        self: "pyrogram.Client", ids: Optional[Union[int, Iterable[int]]] = None
+    ) -> Tuple[int, int]:
         """Restores updates for the time while the client was offline.
 
         .. note::
@@ -42,6 +44,11 @@ class RecoverGaps:
             To use this method, you must set the ``Client.skip_updates`` parameter to False, otherwise updates state saving and recovery will not work.
 
         .. include:: /_includes/usable-by/users-bots.rst
+
+        Parameters:
+            ids (``int`` | List of ``int``, *optional*):
+                Identifiers of the chats to recover, 0 for personal messages and updates.
+                If omitted, all known chats will be recovered.
 
         Returns:
             ``tuple``: The number of recovered messages and other updates is returned.
@@ -53,7 +60,7 @@ class RecoverGaps:
             log.debug("Recover gaps disabled in client params. Skipping recovery")
             return (message_updates_counter, other_updates_counter)
 
-        states = await self.storage.get_update_states()
+        states = await self.storage.get_update_states(ids)
 
         if not states:
             log.info("No states found, skipping recovery")
