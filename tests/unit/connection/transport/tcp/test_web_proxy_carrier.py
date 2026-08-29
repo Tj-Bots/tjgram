@@ -285,9 +285,15 @@ def _window_grant(amount: int) -> Frame:
 
 
 async def _run_until_blocked(sending: "asyncio.Task[None]") -> None:
-    # `send()` only suspends once it runs out of credit, so a single loop
-    #  iteration is enough to drive it up to that point.
-    await asyncio.sleep(0)
+    # `send()` suspends once it runs out of credit, and waking it after a WINDOW
+    #  grant costs three loop iterations below 3.12, where `asyncio.wait_for` ran the
+    #  wait in a task of its own, against one on 3.12+, which awaits the coroutine
+    #  directly. A single yield left the grant unspent and failed
+    #  `test_send_never_puts_more_on_the_wire_than_the_credit_granted` on 3.9-3.11.
+    #  Ten is that measured three with room to spare.
+    #  https://github.com/python/cpython/blob/0fb18b02c8ad56299d6a2910be0bab8ad601ef24/Lib/asyncio/tasks.py#L509
+    for _ in range(10):
+        await asyncio.sleep(0)
 
     assert not sending.done()
 
@@ -432,6 +438,14 @@ async def _run_failing_tracked_task(carrier: WebProxyCarrier) -> None:
     assert carrier._background_tasks == set(), "a finished task must not stay in the tracking set"
 
 
+def _carrier_records(caplog: pytest.LogCaptureFixture) -> List[logging.LogRecord]:
+    # `caplog` collects at the root, so a report from another logger lands in it too.
+    #  On 3.8 the garbage collector reaches a task an earlier test left pending mid-run
+    #  and `asyncio` logs "Task was destroyed but it is pending!" at ERROR, which the
+    #  comparisons below then read as a line this module emitted.
+    return [record for record in caplog.records if record.name == web_proxy_carrier.log.name]
+
+
 async def test_a_failed_background_task_the_carrier_recorded_is_reported_at_debug(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
@@ -443,7 +457,7 @@ async def test_a_failed_background_task_the_carrier_recorded_is_reported_at_debu
 
     # The next `send()` raises `_fail_exc` at the caller, so this is the second
     #  report of an error that already has an owner.
-    assert [(record.levelno, record.getMessage()) for record in caplog.records] == [
+    assert [(record.levelno, record.getMessage()) for record in _carrier_records(caplog)] == [
         (logging.DEBUG, "WEB proxy: background task failed: uplink rejected: HTTP 409"),
     ]
 
@@ -458,7 +472,7 @@ async def test_a_failed_background_task_nothing_recorded_is_reported_at_error(
 
     # `_fail_exc` is unset, so no caller will ever be handed this failure and
     #  swallowing it at debug would lose it outright.
-    assert [(record.levelno, record.getMessage()) for record in caplog.records] == [
+    assert [(record.levelno, record.getMessage()) for record in _carrier_records(caplog)] == [
         (
             logging.ERROR,
             "WEB proxy: background task failed with nothing to report it: uplink rejected: HTTP 409",
@@ -478,7 +492,7 @@ async def test_a_cancelled_background_task_is_not_reported(caplog: pytest.LogCap
 
         await carrier._cancel_tracked(task)
 
-    assert caplog.records == []
+    assert _carrier_records(caplog) == []
 
 
 async def test_recv_after_close_does_not_start_a_grant_task() -> None:
