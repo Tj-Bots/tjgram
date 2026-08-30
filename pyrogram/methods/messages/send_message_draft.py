@@ -31,6 +31,8 @@ class SendMessageDraft:
         message_thread_id: Optional[int] = None,
         parse_mode: Optional["enums.ParseMode"] = None,
         entities: Optional[List["types.MessageEntity"]] = None,
+        can_stop: Optional[bool] = None,
+        keep_on_stop: Optional[bool] = None
     ) -> bool:
         """Use this method to stream a partial message to a user while the message is being generated.
 
@@ -62,6 +64,14 @@ class SendMessageDraft:
 
             entities (List of :obj:`~pyrogram.types.MessageEntity`):
                 List of special entities that appear in message text, which can be specified instead of *parse_mode*.
+
+            can_stop (``bool``, *optional*):
+                Pass *True* to show the user a button to stop further drafts.
+
+            keep_on_stop (``bool``, *optional*):
+                Pass *True* to keep the draft in the chat when the button is pressed.
+                The draft will still disappear after a short time or if the bot sends a message.
+                To fully preserve the partial draft, the bot should send it as a new message.
 
         Returns:
             ``bool``: On success, True is returned.
@@ -99,6 +109,8 @@ class SendMessageDraft:
                     text=await types.FormattedText(
                         text=text, parse_mode=parse_mode, entities=entities
                     ).write(self),
+                    can_stop=can_stop,
+                    keep_on_stop=keep_on_stop,
                 ),
                 top_msg_id=message_thread_id,
             )

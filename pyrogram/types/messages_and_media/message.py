@@ -450,10 +450,13 @@ class Message(Object, Update):
             Service message: checklist tasks added.
 
         community_chat_added (:obj:`~pyrogram.types.CommunityChatAdded`, *optional*):
-            Service message: chat added to a Community.
+            Service message: chat added to a :obj:`~pyrogram.types.Community`.
 
         community_chat_removed (:obj:`~pyrogram.types.CommunityChatRemoved`, *optional*):
-            Service message: chat removed from a Community.
+            Service message: chat removed from a :obj:`~pyrogram.types.Community`.
+
+        community_chat_joined (:obj:`~pyrogram.types.CommunityChatJoined`, *optional*):
+            Service message: chat was joined by a user from a :obj:`~pyrogram.types.Community`.
 
         premium_gift_code (:obj:`~pyrogram.types.PremiumGiftCode`, *optional*):
             Service message: premium gift code information.
@@ -753,8 +756,9 @@ class Message(Object, Update):
         direct_message_price_changed: Optional["types.DirectMessagePriceChanged"] = None,
         checklist_tasks_done: Optional[List["types.ChecklistTasksDone"]] = None,
         checklist_tasks_added: Optional[List["types.ChecklistTasksAdded"]] = None,
-        community_chat_added: Optional[List["types.CommunityChatAdded"]] = None,
-        community_chat_removed: Optional[List["types.CommunityChatRemoved"]] = None,
+        community_chat_added: Optional["types.CommunityChatAdded"] = None,
+        community_chat_removed: Optional["types.CommunityChatRemoved"] = None,
+        community_chat_joined: Optional["types.CommunityChatJoined"] = None,
         premium_gift_code: Optional["types.PremiumGiftCode"] = None,
         gifted_premium: Optional["types.GiftedPremium"] = None,
         gifted_stars: Optional["types.GiftedStars"] = None,
@@ -941,6 +945,7 @@ class Message(Object, Update):
         self.checklist_tasks_added = checklist_tasks_added
         self.community_chat_added = community_chat_added
         self.community_chat_removed = community_chat_removed
+        self.community_chat_joined = community_chat_joined
         self.premium_gift_code = premium_gift_code
         self.gifted_premium = gifted_premium
         self.gifted_stars = gifted_stars
@@ -1369,7 +1374,9 @@ class Message(Object, Update):
             else:
                 service_type = enums.MessageServiceType.COMMUNITY_CHAT_REMOVED
                 community_chat_removed = types.CommunityChatRemoved()
-
+        elif isinstance(action, raw.types.MessageActionChatJoinedViaCommunity):
+            service_type = enums.MessageServiceType.COMMUNITY_CHAT_JOINED
+            community_chat_joined = await types.CommunityChatJoined._parse(client, action, chats)
 
         parsed_message = Message(
             id=message.id,
@@ -1448,6 +1455,7 @@ class Message(Object, Update):
             checklist_tasks_added=checklist_tasks_added,
             community_chat_added=community_chat_added,
             community_chat_removed=community_chat_removed,
+            community_chat_joined=community_chat_joined,
             reactions=await types.MessageReactions._parse(client, message.reactions, users, chats),
             business_connection_id=business_connection_id,
             raw=message,

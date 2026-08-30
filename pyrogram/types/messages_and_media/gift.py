@@ -20,7 +20,7 @@ from datetime import datetime
 from typing import Dict, List, Optional, Union
 
 import pyrogram
-from pyrogram import raw, types, utils, enums
+from pyrogram import enums, raw, types, utils
 
 from ..object import Object
 
@@ -662,6 +662,7 @@ class Gift(Object):
 
             parsed_gift.is_name_hidden = action_gift.name_hidden or parsed_gift.is_name_hidden
             parsed_gift.is_saved = action_gift.saved or parsed_gift.is_saved
+            parsed_gift.is_private = action_gift.name_hidden or parsed_gift.is_private
             parsed_gift.was_converted = action_gift.converted or parsed_gift.was_converted
             parsed_gift.was_upgraded = action_gift.upgraded or parsed_gift.was_upgraded
             parsed_gift.was_refunded = action_gift.refunded or parsed_gift.was_refunded

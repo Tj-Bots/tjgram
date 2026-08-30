@@ -43,6 +43,7 @@ from .on_raw_update import OnRawUpdate
 from .on_shipping_query import OnShippingQuery
 from .on_start import OnStart
 from .on_stop import OnStop
+from .on_stopped_message_generation import OnStoppedMessageGeneration
 from .on_story import OnStory
 from .on_user_status import OnUserStatus
 
@@ -75,6 +76,7 @@ class Decorators(
     OnShippingQuery,
     OnStart,
     OnStop,
+    OnStoppedMessageGeneration,
     OnStory,
     OnUserStatus,
 ):

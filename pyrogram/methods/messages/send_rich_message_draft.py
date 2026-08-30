@@ -29,6 +29,8 @@ class SendRichMessageDraft:
         draft_id: int,
         rich_message: "types.InputRichMessage",
         message_thread_id: Optional[int] = None,
+        can_stop: Optional[bool] = None,
+        keep_on_stop: Optional[bool] = None
     ) -> bool:
         """Use this method to stream a partial rich message to a user while the message is being generated.
 
@@ -52,6 +54,14 @@ class SendRichMessageDraft:
 
             message_thread_id (``int``, *optional*):
                 Unique identifier for the target message thread.
+
+            can_stop (``bool``, *optional*):
+                Pass *True* to show the user a button to stop further drafts.
+
+            keep_on_stop (``bool``, *optional*):
+                Pass *True* to keep the draft in the chat when the button is pressed.
+                The draft will still disappear after a short time or if the bot sends a message.
+                To fully preserve the partial draft, the bot should send it as a new message.
 
         Returns:
             ``bool``: On success, True is returned.
@@ -87,6 +97,8 @@ class SendRichMessageDraft:
                 action=raw.types.InputSendMessageRichMessageDraftAction(
                     random_id=draft_id,
                     rich_message=rich_message.write(),
+                    can_stop=can_stop,
+                    keep_on_stop=keep_on_stop,
                 ),
                 top_msg_id=message_thread_id,
             )

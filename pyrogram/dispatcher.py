@@ -20,10 +20,10 @@ import asyncio
 import inspect
 import logging
 from collections import OrderedDict
-from typing import Dict
+from typing import Dict, Union
 
 import pyrogram
-from pyrogram import utils
+from pyrogram import raw, utils
 from pyrogram.handlers import (
     BusinessConnectionHandler,
     BusinessMessageHandler,
@@ -49,6 +49,7 @@ from pyrogram.handlers import (
     PurchasedPaidMediaHandler,
     RawUpdateHandler,
     ShippingQueryHandler,
+    StoppedMessageGenerationHandler,
     StoryHandler,
     UserStatusHandler,
 )
@@ -70,7 +71,9 @@ from pyrogram.raw.types import (
     UpdateBotShippingQuery,
     UpdateBusinessBotCallbackQuery,
     UpdateChannelParticipant,
+    UpdateChannelUserTyping,
     UpdateChatParticipant,
+    UpdateChatUserTyping,
     UpdateDeleteChannelMessages,
     UpdateDeleteEphemeralMessages,
     UpdateDeleteMessages,
@@ -88,6 +91,7 @@ from pyrogram.raw.types import (
     UpdateNewScheduledMessage,
     UpdateStory,
     UpdateUserStatus,
+    UpdateUserTyping,
 )
 
 log = logging.getLogger(__name__)
@@ -117,6 +121,7 @@ class Dispatcher:
     DELETED_BUSINESS_MESSAGES_UPDATES = (UpdateBotDeleteBusinessMessage,)
     MANAGED_BOT_UPDATES = (UpdateManagedBot,)
     GUEST_MESSAGE_UPDATES = (UpdateBotGuestChatQuery,)
+    USER_TYPING_UPDATES = (UpdateUserTyping, UpdateChatUserTyping, UpdateChannelUserTyping)
 
     def __init__(self, client: "pyrogram.Client"):
         self.client = client
@@ -286,12 +291,33 @@ class Dispatcher:
             # Pre-parse referenced messages so they get cached before the main message
             for ref in update.reference_messages or []:
                 await pyrogram.types.Message._parse(self.client, ref, users, chats)
+
             parsed, _ = await message_parser(update, users, chats)
 
             return (
                 parsed,
                 GuestMessageHandler
             )
+
+        async def user_typing_parser(
+            update: Union[
+                "raw.types.UpdateUserTyping",
+                "raw.types.UpdateChatUserTyping",
+                "raw.types.UpdateChannelUserTyping",
+            ],
+            users: Dict[int, "raw.base.User"],
+            chats: Dict[int, "raw.base.User"],
+        ):
+            if isinstance(update.action, raw.types.SendMessageStopDraftAction):
+                return (
+                    await pyrogram.types.MessageGenerationStopped._parse(
+                        self.client,
+                        update,
+                        users,
+                        chats
+                    ),
+                    StoppedMessageGenerationHandler
+                )
 
         self.update_parsers = {
             Dispatcher.NEW_MESSAGE_UPDATES: message_parser,
@@ -317,6 +343,7 @@ class Dispatcher:
             Dispatcher.DELETED_BUSINESS_MESSAGES_UPDATES: deleted_business_messages_parser,
             Dispatcher.MANAGED_BOT_UPDATES: managed_bot_parser,
             Dispatcher.GUEST_MESSAGE_UPDATES: guest_message_parser,
+            Dispatcher.USER_TYPING_UPDATES: user_typing_parser
         }
 
         self.update_parsers = {key: value for key_tuple, value in self.update_parsers.items() for key in key_tuple}

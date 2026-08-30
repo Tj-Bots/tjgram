@@ -48,6 +48,7 @@ from .menu_button import MenuButton
 from .menu_button_commands import MenuButtonCommands
 from .menu_button_default import MenuButtonDefault
 from .menu_button_web_app import MenuButtonWebApp
+from .message_generation_stopped import MessageGenerationStopped
 from .message_reaction_count_updated import MessageReactionCountUpdated
 from .message_reaction_updated import MessageReactionUpdated
 from .order_info import OrderInfo
@@ -97,6 +98,7 @@ __all__ = [
     "MenuButtonCommands",
     "MenuButtonDefault",
     "MenuButtonWebApp",
+    "MessageGenerationStopped",
     "MessageReactionCountUpdated",
     "MessageReactionUpdated",
     "OrderInfo",

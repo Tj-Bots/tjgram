@@ -24,12 +24,12 @@ from pyrogram import raw, types
 from ..object import Object
 
 
-class CommunityChatAdded(Object):
-    """Describes a service message about a chat being added to a community.
+class CommunityChatJoined(Object):
+    """Describes a service message about a chat being joined by a user from a community.
 
     Parameters:
         community (:obj:`~pyrogram.types.Community`):
-            The new community to which the chat belongs.
+            The community from which the chat was joined.
     """
 
     def __init__(self, *, community: "types.Community"):
@@ -40,9 +40,9 @@ class CommunityChatAdded(Object):
     @staticmethod
     async def _parse(
         client: "pyrogram.Client",
-        action: "raw.types.MessageActionChangeCommunity",
+        action: "raw.types.MessageActionChatJoinedViaCommunity",
         chats: Dict[int, "raw.base.Chat"],
-    ) -> "CommunityChatAdded":
-        return CommunityChatAdded(
+    ) -> "CommunityChatJoined":
+        return CommunityChatJoined(
             community=await types.Community._parse(client, chats.get(action.community_id)),
         )

@@ -44,5 +44,6 @@ from .raw_update_handler import RawUpdateHandler
 from .shipping_query_handler import ShippingQueryHandler
 from .start_handler import StartHandler
 from .stop_handler import StopHandler
+from .stopped_message_generation_handler import StoppedMessageGenerationHandler
 from .story_handler import StoryHandler
 from .user_status_handler import UserStatusHandler

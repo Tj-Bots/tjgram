@@ -52,22 +52,22 @@ class MessageServiceType(AutoName):
     "Deleted chat photo"
 
     FORUM_TOPIC_CREATED = auto()
-    "a new forum topic created in the chat"
+    "New forum topic created in the chat"
 
     FORUM_TOPIC_CLOSED = auto()
-    "a new forum topic closed in the chat"
+    "New forum topic closed in the chat"
 
     FORUM_TOPIC_REOPENED = auto()
-    "a new forum topic reopened in the chat"
+    "New forum topic reopened in the chat"
 
     FORUM_TOPIC_EDITED = auto()
-    "a new forum topic renamed in the chat"
+    "New forum topic renamed in the chat"
 
     GENERAL_FORUM_TOPIC_HIDDEN = auto()
-    "a general forum topic hidden in the chat"
+    "General forum topic hidden in the chat"
 
     GENERAL_FORUM_TOPIC_UNHIDDEN = auto()
-    "a general forum topic unhidden in the chat"
+    "General forum topic unhidden in the chat"
 
     GROUP_CHAT_CREATED = auto()
     "Group chat created"
@@ -227,6 +227,9 @@ class MessageServiceType(AutoName):
 
     COMMUNITY_CHAT_REMOVED = auto()
     "Community chat removed"
+
+    COMMUNITY_CHAT_JOINED = auto()
+    "Joined in chat via community"
 
     UPGRADED_GIFT_PURCHASE_OFFER = auto()
     "Upgraded gift purchase offer"

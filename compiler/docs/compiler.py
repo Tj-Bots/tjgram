@@ -876,6 +876,7 @@ def pyrogram_api():
             ChecklistTasksAdded
             ChecklistTasksDone
             CommunityChatAdded
+            CommunityChatJoined
             CommunityChatRemoved
             Checklist
             RefundedPayment
