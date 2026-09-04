@@ -318,6 +318,7 @@ class Dispatcher:
                     ),
                     StoppedMessageGenerationHandler
                 )
+            return (None, type(None))
 
         self.update_parsers = {
             Dispatcher.NEW_MESSAGE_UPDATES: message_parser,
