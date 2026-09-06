@@ -64,6 +64,13 @@ Dev version
 pip install https://github.com/tj-bots/tjgram/archive/dev.zip --force-reinstall
 ```
 
+Optional dependencies
+
+``` bash
+pip install tjgram[fast]     # TgCrypto and uvloop for better performance
+pip install tjgram[qrcode]   # QR code login support
+```
+
 ### Acknowledgements
 
 tjgram is a fork of [Kurigram](https://github.com/KurimuzonAkuma/kurigram), itself a fork of [Pyrogram](https://github.com/pyrogram/pyrogram).
