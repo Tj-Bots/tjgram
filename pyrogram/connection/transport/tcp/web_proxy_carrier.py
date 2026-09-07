@@ -472,7 +472,7 @@ class _HttpConnection:
 
 
 class WebProxyCarrier:
-    # One relay session, one logical stream (id 1). kurigram opens a fresh
+    # One relay session, one logical stream (id 1). tjgram opens a fresh
     #  TCP instance per DC/media connection, so - unlike tdesktop, which
     #  multiplexes every account over one process-wide carrier - each gets
     #  its own session; simpler, and keeps failures isolated.

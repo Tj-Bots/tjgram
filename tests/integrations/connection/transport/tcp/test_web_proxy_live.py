@@ -30,7 +30,7 @@ three ways:
    ``resPQ`` comes back with the nonce we sent. Deliberately low-level so a
    reviewer can see exactly which bytes cross the wire without needing to
    trust anything else in this codebase.
-2. A full, real Diffie-Hellman key exchange via kurigram's own
+2. A full, real Diffie-Hellman key exchange via tjgram's own
    ``pyrogram.session.auth.Auth``, proving a *sustained*, multi-message,
    partially-encrypted exchange works end to end through the same transport -
    not just one request/response.
