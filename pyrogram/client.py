@@ -700,7 +700,7 @@ class Client(Methods):
             from qrcode import QRCode  # noqa: PLC0415 # ty: ignore[unresolved-import]
         except ImportError as er:
             raise ImportError(
-                "`qrcode` is not installed, run `pip install 'kurigram[qrcode]'`"
+                "`qrcode` is not installed, run `pip install 'tjgram[qrcode]'`"
             ) from er
 
         qr_login = QRLogin(self, except_ids or [])

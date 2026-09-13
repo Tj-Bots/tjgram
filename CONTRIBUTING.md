@@ -1,11 +1,11 @@
-# Contributing to Kurigram
+# Contributing to tjgram
 
 Thanks for taking the time to contribute! This document covers how to set up a development
 environment, the expected workflow, and what we look for in a pull request.
 
 ## Getting started
 
-Kurigram requires Python `>=3.10` and [`uv`](https://docs.astral.sh/uv/getting-started/installation/).
+tjgram requires Python `>=3.10` and [`uv`](https://docs.astral.sh/uv/getting-started/installation/).
 
 Nothing else has to be set up. Every `make` recipe below runs through `uv run`, which creates
 `.venv` from `uv.lock` and brings it up to date whenever the lock file moves, so there is no
@@ -17,7 +17,7 @@ make sync
 
 Development tools live in the `dev` dependency group and are installed by default; the
 documentation build has its own `docs` group, which `make docs` selects on its own. Neither is an
-extra, so `pip install kurigram[dev]` is not a thing. After changing a dependency in
+extra, so `pip install tjgram[dev]` is not a thing. After changing a dependency in
 `pyproject.toml`, run `uv lock` and commit `uv.lock` with the change.
 
 ### Generated code
@@ -171,8 +171,8 @@ A few conventions that have come up repeatedly in code review but aren't enforce
 - **Module-level constants that never change** should be annotated `Final`.
 - **An optional third-party import** (a package the project doesn't depend on, used defensively
   behind a feature that needs it) is marked `# ty: ignore[unresolved-import]`, with the reason
-  saying it's optional and linking to the [docs](https://docs.kurigram.icu) section covering
-  that feature, if there is one.
+  saying it's optional and linking to relevant documentation covering that feature, if there
+  is any.
 
 ## Commit and pull request guidelines
 
@@ -198,5 +198,4 @@ A few conventions that have come up repeatedly in code review but aren't enforce
 
 ## Questions
 
-If something is unclear, reach out on the [official chat](https://t.me/kurigram_chat) or follow
-news and announcements on the [official channel](https://t.me/kurigram_news).
+If something is unclear, open an issue on GitHub.

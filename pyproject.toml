@@ -86,7 +86,7 @@ qrcode = [
 
 # `dev` and `docs` are tooling, not something a user of the library installs, so they are
 #  dependency groups rather than extras: `uv sync` takes them from the lock file and `pip
-#  install kurigram[dev]` stops being a thing anyone can type by accident.
+#  install tjgram[dev]` stops being a thing anyone can type by accident.
 #
 # Their floors are deliberately above the oldest version that runs. A linter or a
 #  documentation theme resolved a year back gives a different verdict and a different site
