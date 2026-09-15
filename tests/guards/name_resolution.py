@@ -54,6 +54,14 @@ TOOLING_ROOTS: Final[tuple[pathlib.Path, ...]] = (
 )
 
 
+# Where a `#` comment lives outside the package: the tooling configuration at the repository
+#  root, `.gitignore` beside it, and the workflows and issue templates under `.github`. Nothing
+#  under `pyrogram/`, `tests/` or `compiler/` is one of these formats. The root is read flat on
+#  purpose, since a recursive walk from there descends into `.venv` and into every ignored
+#  directory.
+CONFIGURATION_GLOBS: Final[tuple[str, ...]] = ("*.toml", "*.yml", "*.yaml")
+
+
 def is_generated(path: pathlib.Path) -> bool:
     return path in GENERATED or any(tree in path.parents for tree in GENERATED)
 
@@ -69,6 +77,17 @@ def tooling_files() -> Iterator[pathlib.Path]:
     """Every module beside the package: the suite and the code generators."""
     for root in TOOLING_ROOTS:
         yield from sorted(root.rglob("*.py"))
+
+
+def configuration_files() -> Iterator[pathlib.Path]:
+    """Every file beside the package that is not Python and whose comments open with `#`."""
+    found: set[pathlib.Path] = {REPOSITORY_ROOT / "Makefile", REPOSITORY_ROOT / ".gitignore"}
+
+    for pattern in CONFIGURATION_GLOBS:
+        found.update(REPOSITORY_ROOT.glob(pattern))
+        found.update((REPOSITORY_ROOT / ".github").rglob(pattern))
+
+    yield from sorted(path for path in found if path.is_file())
 
 
 def attribute_chain(root: Any, *, names: Sequence[str]) -> bool:
