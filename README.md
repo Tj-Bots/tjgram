@@ -2,7 +2,7 @@
     <a href="https://github.com/tj-bots/tjgram">
         <b>tjgram</b>
     </a>
-    <br>
+    <br />
     <b>Telegram MTProto API Framework for Python</b>
     <br/>
     <br/>
@@ -73,5 +73,5 @@ pip install tjgram[qrcode]   # QR code login support
 
 ### Acknowledgements
 
-tjgram is a fork of [Kurigram](https://github.com/KurimuzonAkuma/kurigram), itself a fork of [Pyrogram](https://github.com/pyrogram/pyrogram).
+tjgram is a fork of [Kurigram](https://github.com/kurigram-org/kurigram), itself a fork of [Pyrogram](https://github.com/pyrogram/pyrogram).
 Credit for the vast majority of this codebase goes to their respective authors and maintainers.
