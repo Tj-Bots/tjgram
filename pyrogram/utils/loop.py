@@ -21,9 +21,10 @@ from __future__ import annotations as _annotations
 import asyncio
 
 
-# The loop the library runs on, recorded by `get_event_loop()` below the first time it is
-#  asked from inside one, which is `Client.loop` during `start()`. It cannot be resolved at
-#  import: `pyrogram/sync.py` wraps every method before anything is running one.
+# The loop `get_event_loop()` builds for a caller that is inside none, so that the sync
+#  bridge has something to drive. It is not a record of the loop any client runs on: a
+#  client is asked for its own, and `pyrogram/sync.py` wraps every method at import time,
+#  before there is a client or a loop to ask.
 _loop: asyncio.AbstractEventLoop | None = None
 
 
@@ -36,24 +37,16 @@ def get_running_loop() -> asyncio.AbstractEventLoop | None:
 
 
 def get_event_loop() -> asyncio.AbstractEventLoop:
-    """Return the loop the library runs on, recording it when the caller is inside one."""
-    # Rebinding it is the point: a thread with no loop of its own cannot reach the one
-    #  the client runs on any other way.
+    """Return the loop the caller is inside, building one when the caller is inside none."""
     global _loop  # noqa: PLW0603
 
-    recorded = _loop
     running = get_running_loop()
 
-    # A recorded loop that is not running was either built below for a caller that had
-    #  none, or closed by whoever ran it. A loop running now is the one the application
-    #  drives, so it wins.
-    if running is not None and (recorded is None or not recorded.is_running()):
-        recorded = running
+    if running is not None:
+        return running
 
-    if recorded is None or recorded.is_closed():
-        recorded = asyncio.new_event_loop()
-        asyncio.set_event_loop(recorded)
+    if _loop is None or _loop.is_closed():
+        _loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(_loop)
 
-    _loop = recorded
-
-    return recorded
+    return _loop

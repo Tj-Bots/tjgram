@@ -16,12 +16,13 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-"""The sync bridge resolves both of its loops when the wrapped method runs, not at import.
+"""The sync bridge sends a call to the loop the object it was made on runs on.
 
 `pyrogram.sync` wraps every client method and every bound method of every type while
-`import pyrogram` is still running, so a loop resolved there is one nothing ever runs.
-A sync call made off the client's loop was bridged to it and died with
-`RuntimeError: ... got Future ... attached to a different loop`.
+`import pyrogram` is still running, so the loop cannot be resolved there. Resolving it from
+a process-wide record instead answers for whichever client asked first, and hands an async
+generator to the caller's loop while its coroutine sibling goes to the client's. Both end
+in `RuntimeError: ... got Future ... attached to a different loop`.
 """
 
 from __future__ import annotations as _annotations
@@ -36,13 +37,13 @@ import time
 from collections.abc import AsyncGenerator, Iterator
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Final
+from typing import Final, Protocol
 
 import pytest
 
 import pyrogram
-from pyrogram import Client, utils
-from pyrogram.sync import async_to_sync
+from pyrogram import Client, types, utils
+from pyrogram.sync import _bridge_loop, async_to_sync
 
 _HANDLED_SIGNALS: Final[tuple[signal.Signals, ...]] = (
     signal.SIGINT,
@@ -54,12 +55,25 @@ _REPOSITORY_ROOT: Final[Path] = Path(__file__).parents[2]
 
 
 class Api:
-    """Reaches its client's loop the way `Session.send` does (`pyrogram/session/session.py:349`)."""
+    """A client stand-in: a `_loop` behind a `loop` property, the shape `Client` has."""
 
     def __init__(self, loop: asyncio.AbstractEventLoop) -> None:
-        self.loop = loop
+        self._loop = loop
         self.executor = ThreadPoolExecutor(1, thread_name_prefix="Handler")
 
+    @property
+    def loop(self) -> asyncio.AbstractEventLoop:
+        return self._loop
+
+    async def running_loop(self) -> asyncio.AbstractEventLoop:
+        return asyncio.get_running_loop()
+
+    async def running_loops(self, count: int) -> AsyncGenerator[asyncio.AbstractEventLoop]:
+        for _ in range(count):
+            yield asyncio.get_running_loop()
+
+    # `shout` and `spell` reach their own loop the way `Session.send` does
+    #  (`pyrogram/session/session.py:349`), so running them anywhere else raises.
     async def shout(self, text: str) -> str:
         return await self.loop.run_in_executor(self.executor, str.upper, text)
 
@@ -68,19 +82,37 @@ class Api:
             yield await self.loop.run_in_executor(self.executor, str.upper, letter)
 
 
-def _bridged(loop: asyncio.AbstractEventLoop) -> Api:
-    api = Api(loop)
+class Bound:
+    """A bound method reaching its client the way every `types.Object` subclass does."""
 
-    async_to_sync(api, "shout")
-    async_to_sync(api, "spell")
+    def __init__(self, client: Api) -> None:
+        self._client = client
 
-    return api
+    async def shout(self, text: str) -> str:
+        return await self._client.loop.run_in_executor(
+            self._client.executor,
+            str.upper,
+            text,
+        )
+
+
+# The library wraps its methods on the class, at import, and so does this.
+async_to_sync(Api, "running_loop")
+async_to_sync(Api, "running_loops")
+async_to_sync(Api, "shout")
+async_to_sync(Api, "spell")
+
+async_to_sync(Bound, "shout")
+
+
+class LoopInAnotherThread(Protocol):
+    def __call__(self, *, name: str) -> asyncio.AbstractEventLoop: ...
 
 
 @pytest.fixture(autouse=True)
-def forget_the_recorded_loop(monkeypatch: pytest.MonkeyPatch) -> None:
-    # `get_event_loop()` records the first loop it is asked from, and that record would
-    #  otherwise outlive the test that made it and answer for the next one.
+def forget_the_loop_built_for_sync_callers(monkeypatch: pytest.MonkeyPatch) -> None:
+    # `get_event_loop()` keeps the loop it built for a caller that was inside none, and that
+    #  loop would otherwise outlive the test that asked for it and answer for the next one.
     monkeypatch.setattr(utils.loop, "_loop", None)
 
 
@@ -93,6 +125,60 @@ def sync_only_loop() -> Iterator[asyncio.AbstractEventLoop]:
 
     loop.close()
     asyncio.set_event_loop(None)
+
+
+@pytest.fixture
+def idle_loop() -> Iterator[asyncio.AbstractEventLoop]:
+    """A loop nothing drives, standing in for a client that was given one of its own."""
+    loop = asyncio.new_event_loop()
+
+    yield loop
+
+    loop.close()
+
+
+@pytest.fixture
+def loop_in_another_thread() -> Iterator[LoopInAnotherThread]:
+    """Loops driven by threads of their own, the way a client started off this one is."""
+    driven: list[tuple[asyncio.AbstractEventLoop, threading.Thread]] = []
+
+    def start(*, name: str) -> asyncio.AbstractEventLoop:
+        loop = asyncio.new_event_loop()
+        running = threading.Event()
+
+        def drive() -> None:
+            asyncio.set_event_loop(loop)
+            loop.call_soon(running.set)
+            loop.run_forever()
+
+        thread = threading.Thread(
+            target=drive,
+            name=name,
+        )
+        thread.start()
+        running.wait()
+
+        driven.append((loop, thread))
+
+        return loop
+
+    yield start
+
+    for loop, thread in driven:
+        loop.call_soon_threadsafe(loop.stop)
+        thread.join()
+        loop.close()
+
+
+async def _loop_the_client_pins(
+    client: Client,
+    *,
+    driven_by: asyncio.AbstractEventLoop,
+) -> asyncio.AbstractEventLoop:
+    async def read() -> asyncio.AbstractEventLoop:
+        return client.loop
+
+    return await asyncio.wrap_future(asyncio.run_coroutine_threadsafe(read(), driven_by))
 
 
 def test_importing_pyrogram_resolves_no_loop() -> None:
@@ -108,7 +194,7 @@ def test_importing_pyrogram_resolves_no_loop() -> None:
     assert recorded.stdout.strip() == "None"
 
 
-def test_get_running_loop_answers_none_outside_a_loop_and_records_nothing() -> None:
+def test_get_running_loop_answers_none_outside_a_loop_and_builds_nothing() -> None:
     assert utils.get_running_loop() is None
     assert utils.loop._loop is None
 
@@ -117,34 +203,61 @@ async def test_get_running_loop_answers_the_loop_the_caller_is_inside() -> None:
     assert utils.get_running_loop() is asyncio.get_running_loop()
 
 
-async def test_get_event_loop_records_the_loop_it_is_first_asked_from() -> None:
-    running = asyncio.get_running_loop()
-
-    assert utils.get_event_loop() is running
-    assert utils.loop._loop is running
+async def test_get_event_loop_answers_the_caller_loop_and_keeps_no_record_of_it() -> None:
+    assert utils.get_event_loop() is asyncio.get_running_loop()
+    assert utils.loop._loop is None
 
 
-def test_get_event_loop_keeps_answering_the_loop_it_recorded(
+def test_get_event_loop_keeps_answering_the_loop_it_built(
     sync_only_loop: asyncio.AbstractEventLoop,
 ) -> None:
     assert utils.get_event_loop() is sync_only_loop
 
 
-async def test_a_call_made_inside_the_client_loop_is_awaited_by_the_caller() -> None:
-    running = asyncio.get_running_loop()
-    api = _bridged(running)
+def test_the_bridge_takes_its_loop_from_the_object_the_call_is_made_on(
+    idle_loop: asyncio.AbstractEventLoop,
+    sync_only_loop: asyncio.AbstractEventLoop,
+) -> None:
+    client = Client(
+        name="bridge_loop_probe",
+        in_memory=True,
+        loop=idle_loop,
+    )
 
-    # `Client.loop` does this during `start()`, which is what records the loop.
-    utils.get_event_loop()
+    assert _bridge_loop((client,)) is idle_loop
+    user = types.User(
+        client=client,
+        id=1,
+    )
+
+    assert _bridge_loop((user,)) is idle_loop
+
+    # `idle()` and `compose()` are wrapped on their module, so no argument carries a loop.
+    assert _bridge_loop(()) is sync_only_loop
+
+
+def test_the_bridge_passes_over_a_loop_that_has_been_closed(
+    sync_only_loop: asyncio.AbstractEventLoop,
+) -> None:
+    """What `asyncio.run()` leaves behind: the loop it drove the client on, now closed."""
+    spent = asyncio.new_event_loop()
+    spent.close()
+
+    api = Api(spent)
+
+    assert _bridge_loop((api,)) is sync_only_loop
+    assert api.running_loop() is sync_only_loop
+
+
+async def test_a_call_made_inside_the_client_loop_is_awaited_by_the_caller() -> None:
+    api = Api(asyncio.get_running_loop())
 
     assert await api.shout("hello") == "HELLO"
 
 
 async def test_a_call_made_from_a_worker_thread_reaches_the_client_loop() -> None:
     running = asyncio.get_running_loop()
-    api = _bridged(running)
-
-    utils.get_event_loop()
+    api = Api(running)
 
     # `Client.executor` runs a sync handler here, with no loop of its own.
     with ThreadPoolExecutor(1, thread_name_prefix="Handler") as handler_thread:
@@ -153,9 +266,7 @@ async def test_a_call_made_from_a_worker_thread_reaches_the_client_loop() -> Non
 
 async def test_an_async_generator_made_from_a_worker_thread_reaches_the_client_loop() -> None:
     running = asyncio.get_running_loop()
-    api = _bridged(running)
-
-    utils.get_event_loop()
+    api = Api(running)
 
     with ThreadPoolExecutor(1, thread_name_prefix="Handler") as handler_thread:
         letters = await running.run_in_executor(handler_thread, lambda: list(api.spell("ab")))
@@ -163,10 +274,62 @@ async def test_an_async_generator_made_from_a_worker_thread_reaches_the_client_l
     assert letters == ["A", "B"]
 
 
+async def test_a_call_made_on_a_bound_object_reaches_the_loop_of_the_client_it_carries(
+    loop_in_another_thread: LoopInAnotherThread,
+) -> None:
+    client_loop = loop_in_another_thread(name="ClientLoop")
+
+    assert await Bound(Api(client_loop)).shout("hello") == "HELLO"
+
+
+async def test_a_call_made_from_another_loop_runs_on_the_client_loop(
+    loop_in_another_thread: LoopInAnotherThread,
+) -> None:
+    client_loop = loop_in_another_thread(name="ClientLoop")
+    api = Api(client_loop)
+
+    assert await api.running_loop() is client_loop
+    assert await api.shout("hello") == "HELLO"
+
+
+async def test_an_async_generator_made_from_another_loop_runs_on_the_client_loop_too(
+    loop_in_another_thread: LoopInAnotherThread,
+) -> None:
+    client_loop = loop_in_another_thread(name="ClientLoop")
+    api = Api(client_loop)
+
+    assert [loop async for loop in api.running_loops(2)] == [client_loop, client_loop]
+    assert [letter async for letter in api.spell("ab")] == ["A", "B"]
+
+
+async def test_closing_an_async_generator_made_from_another_loop_finishes_it(
+    loop_in_another_thread: LoopInAnotherThread,
+) -> None:
+    client_loop = loop_in_another_thread(name="ClientLoop")
+    letters = Api(client_loop).spell("abc")
+
+    assert await anext(letters) == "A"
+
+    await letters.aclose()
+
+    with pytest.raises(StopAsyncIteration):
+        await anext(letters)
+
+
+async def test_a_call_from_another_loop_to_a_client_loop_nothing_drives_says_so(
+    idle_loop: asyncio.AbstractEventLoop,
+) -> None:
+    api = Api(idle_loop)
+
+    # Without this the call is handed to a loop nobody runs, and the caller waits forever.
+    with pytest.raises(RuntimeError, match="belongs to an event loop that is not running"):
+        await api.shout("hello")
+
+
 def test_a_call_made_from_sync_code_with_no_loop_drives_the_one_it_is_given(
     sync_only_loop: asyncio.AbstractEventLoop,
 ) -> None:
-    api = _bridged(sync_only_loop)
+    api = Api(sync_only_loop)
 
     assert api.shout("world") == "WORLD"
 
@@ -174,7 +337,7 @@ def test_a_call_made_from_sync_code_with_no_loop_drives_the_one_it_is_given(
 def test_an_async_generator_made_from_sync_code_with_no_loop_yields_its_items(
     sync_only_loop: asyncio.AbstractEventLoop,
 ) -> None:
-    api = _bridged(sync_only_loop)
+    api = Api(sync_only_loop)
 
     assert list(api.spell("ab")) == ["A", "B"]
 
@@ -191,33 +354,32 @@ def test_a_client_keeps_the_loop_it_was_given(
     assert client.loop is sync_only_loop
 
 
-def test_a_client_running_in_another_thread_is_reached_from_the_thread_without_a_loop() -> None:
-    loop = asyncio.new_event_loop()
-    api = _bridged(loop)
-    running = threading.Event()
+async def test_a_second_client_started_on_its_own_loop_is_not_given_the_first_ones(
+    loop_in_another_thread: LoopInAnotherThread,
+) -> None:
+    first_loop = loop_in_another_thread(name="FirstClientLoop")
+    second_loop = loop_in_another_thread(name="SecondClientLoop")
 
-    def drive_the_loop() -> None:
-        asyncio.set_event_loop(loop)
-        # `Client.loop` is read from inside the loop during `start()`, and that is what
-        #  tells the bridge which loop the client was given.
-        loop.call_soon(utils.get_event_loop)
-        loop.call_soon(running.set)
-        loop.run_forever()
-
-    thread = threading.Thread(
-        target=drive_the_loop,
-        name="Loop",
+    first = Client(
+        name="first_client_probe",
+        in_memory=True,
     )
-    thread.start()
-    running.wait()
+    second = Client(
+        name="second_client_probe",
+        in_memory=True,
+    )
 
-    try:
-        assert api.shout("hello") == "HELLO"
+    # `Client.loop` is read from inside the loop during `start()`, and that read pins it.
+    assert await _loop_the_client_pins(first, driven_by=first_loop) is first_loop
+    assert await _loop_the_client_pins(second, driven_by=second_loop) is second_loop
 
-    finally:
-        loop.call_soon_threadsafe(loop.stop)
-        thread.join()
-        loop.close()
+
+def test_a_client_running_in_another_thread_is_reached_from_the_thread_without_a_loop(
+    loop_in_another_thread: LoopInAnotherThread,
+) -> None:
+    api = Api(loop_in_another_thread(name="ClientLoop"))
+
+    assert api.shout("hello") == "HELLO"
 
 
 @pytest.fixture
