@@ -358,9 +358,7 @@ def pyrogram_api():
             set_chat_permissions
             pin_chat_message
             unpin_chat_message
-            pin_forum_topic
             process_chat_has_protected_content_disable_request
-            unpin_forum_topic
             unpin_all_chat_messages
             get_chat
             get_chat_member
@@ -389,17 +387,27 @@ def pyrogram_api():
             get_send_as_chats
             set_send_as_chat
             set_chat_protected_content
-            close_forum_topic
             create_forum_topic
-            delete_forum_topic
             edit_forum_topic
+            delete_forum_topic
+            close_forum_topic
+            reopen_forum_topic
+            pin_forum_topic
+            unpin_forum_topic
+            unpin_all_forum_topic_messages
             get_forum_topics
             get_forum_topics_by_id
+            toggle_forum_topics
+            reopen_general_forum_topic
+            hide_general_forum_topic
+            unhide_general_forum_topic
+            edit_general_forum_topic
+            close_general_forum_topic
+            unpin_all_general_forum_topic_messages
             set_chat_accent_color
             set_chat_profile_accent_color
             set_upgraded_gift_colors
             update_chat_notifications
-            toggle_forum_topics
             create_folder_invite_link
             get_chats_for_folder_invite_link
             get_folders
