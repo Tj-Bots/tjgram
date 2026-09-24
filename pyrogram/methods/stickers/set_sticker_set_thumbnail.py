@@ -18,11 +18,13 @@
 
 from __future__ import annotations as _annotations
 
-from typing import BinaryIO
+from typing import TYPE_CHECKING, BinaryIO
 
 import pyrogram
 from pyrogram import enums, raw, types
-from pyrogram._typing import PathType
+
+if TYPE_CHECKING:
+    from pyrogram._typing import PathType
 
 
 class SetStickerSetThumbnail:

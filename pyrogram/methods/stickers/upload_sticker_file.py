@@ -18,12 +18,14 @@
 
 from __future__ import annotations as _annotations
 
+from typing import TYPE_CHECKING, BinaryIO
 
 import pyrogram
-from pyrogram import types, enums
-from pyrogram._typing import PathType
-from typing import BinaryIO
+from pyrogram import enums, types
 from pyrogram.file_id import FileId, FileType, FileUniqueId, FileUniqueType
+
+if TYPE_CHECKING:
+    from pyrogram._typing import PathType
 
 
 class UploadStickerFile:

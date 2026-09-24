@@ -22,14 +22,18 @@ import io
 import os
 import re
 from pathlib import Path
-from typing import BinaryIO
-from collections.abc import Callable
+from typing import TYPE_CHECKING, BinaryIO
 
 import pyrogram
-from pyrogram import raw, utils, enums, types
-from pyrogram._typing import PathType
+from pyrogram import enums, raw, types, utils
 from pyrogram.file_id import FileType
+
 from ..object import Object
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from pyrogram._typing import PathType
 
 
 class InputSticker(Object):
