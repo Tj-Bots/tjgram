@@ -32,7 +32,7 @@ BLUE   := \033[0;34m
 BOLD   := \033[1m
 RESET  := \033[0m
 
-.PHONY: sync version clean-venv clean-build clean-api clean-docs clean api docs docs-archive build tag dtag lint format typecheck test test-unit test-guards test-integration test-floor test-ceil
+.PHONY: sync version clean-venv clean-build clean-api clean-docs clean api docs-api docs docs-serve docs-archive build tag dtag lint format typecheck test test-unit test-guards test-integration test-floor test-ceil
 
 # No other recipe needs this: they all sync on their own. It exists so CI can install in
 #  a step of its own, which is what makes a resolution failure read as one in the log
@@ -64,9 +64,20 @@ api:
 	cd compiler/api && $(PYTHON) compiler.py
 	cd compiler/errors && $(PYTHON) compiler.py
 
-docs:
+# Both docs recipes below build the same tree with the same builder, so the arguments and the
+#  page generator each have one home here rather than a copy per recipe.
+SPHINX_ARGS := -b dirhtml "docs/source" "docs/build/html" -j auto
+
+docs-api:
 	cd compiler/docs && $(PYTHON) compiler.py
-	$(UV) run --group docs sphinx-build -b dirhtml "docs/source" "docs/build/html" -j auto
+
+docs: docs-api
+	$(UV) run --group docs sphinx-build $(SPHINX_ARGS)
+
+# `sphinx-autobuild` runs that same build, then rebuilds only the pages an edit touched and
+#  reloads the browser, so a docs change costs seconds where `docs` costs minutes.
+docs-serve: docs-api
+	$(UV) run --group docs sphinx-autobuild $(SPHINX_ARGS)
 
 docs-archive:
 	cd docs/build/html && zip -r ../docs.zip ./
@@ -91,8 +102,11 @@ typecheck:
 test:
 	@$(LOAD_ENV_TEST) $(PYTHON) -m pytest
 
+# `--cov` reads its source and its omit list from `[tool.coverage.run]` in `pyproject.toml`, so
+#  neither this recipe nor the CI job calling it restates which tree is measured. Only the offline
+#  selection carries it: `test` and `test-integration` stay as fast as the relay lets them.
 test-unit:
-	$(PYTHON) -m pytest -m 'not integration'
+	$(PYTHON) -m pytest -m 'not integration' --cov
 
 # `test-unit` selects everything that is not integration, so it runs these too. This
 #  target is for working on the guards alone; the two are not disjoint.
