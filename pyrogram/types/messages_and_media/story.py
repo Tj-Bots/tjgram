@@ -18,7 +18,7 @@
 
 from __future__ import annotations as _annotations
 
-from typing import TYPE_CHECKING, BinaryIO, cast
+from typing import TYPE_CHECKING, BinaryIO, Literal, cast, overload
 
 import pyrogram
 from pyrogram import enums, raw, types, utils
@@ -30,6 +30,7 @@ from ..update import Update
 if TYPE_CHECKING:
     from collections.abc import Callable
     from datetime import datetime
+    from io import BytesIO
 
     from pyrogram._typing import PathType
 
@@ -2104,6 +2105,48 @@ class Story(Object, Update):
             paid_message_star_count=paid_message_star_count,
         )
 
+    @overload
+    async def download(
+        self,
+        file_name: PathType = "",
+        in_memory: Literal[False] = False,
+        block: Literal[True] = True,
+        progress: Callable | None = None,
+        progress_args: tuple = (),
+    ) -> str | None: ...
+
+    @overload
+    async def download(
+        self,
+        file_name: PathType = "",
+        in_memory: Literal[True] = True,
+        block: Literal[True] = True,
+        progress: Callable | None = None,
+        progress_args: tuple = (),
+    ) -> BytesIO | None: ...
+
+    @overload
+    async def download(
+        self,
+        file_name: PathType = "",
+        *,
+        in_memory: bool = False,
+        block: Literal[False],
+        progress: Callable | None = None,
+        progress_args: tuple = (),
+    ) -> None: ...
+
+    @overload
+    async def download(
+        self,
+        file_name: PathType,
+        in_memory: bool,
+        block: Literal[False],
+        progress: Callable | None = None,
+        progress_args: tuple = (),
+    ) -> None: ...
+
+    @overload
     async def download(
         self,
         file_name: PathType = "",
@@ -2111,7 +2154,16 @@ class Story(Object, Update):
         block: bool = True,
         progress: Callable | None = None,
         progress_args: tuple = (),
-    ) -> str | BinaryIO | None:
+    ) -> str | BytesIO | None: ...
+
+    async def download(
+        self,
+        file_name: PathType = "",
+        in_memory: bool = False,
+        block: bool = True,
+        progress: Callable | None = None,
+        progress_args: tuple = (),
+    ) -> str | BytesIO | None:
         """Bound method *download* of :obj:`~pyrogram.types.Story`.
 
         Use as a shortcut for:
@@ -2164,7 +2216,7 @@ class Story(Object, Update):
                 You can either keep ``*args`` or add every single extra argument in your function signature.
 
         Returns:
-            ``str`` | ``BinaryIO`` | ``None``: On success, the absolute path of the downloaded file is returned,
+            ``str`` | ``BytesIO`` | ``None``: On success, the absolute path of the downloaded file is returned,
             otherwise, in case ``in_memory=True``, a binary file-like object with its attribute ".name" set is returned.
             In case the download failed or was deliberately stopped with
             :meth:`~pyrogram.Client.stop_transmission`, None is returned.
@@ -2175,7 +2227,7 @@ class Story(Object, Update):
         """
         # A story is a single media, so the list-returning paid-media path never fires.
         return cast(
-            "str | BinaryIO | None",
+            "str | BytesIO | None",
             await self._client.download_media(
                 message=self,
                 file_name=file_name,

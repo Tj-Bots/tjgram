@@ -22,7 +22,7 @@ import contextlib
 import logging
 from functools import partial
 from itertools import groupby
-from typing import TYPE_CHECKING, BinaryIO, SupportsIndex
+from typing import TYPE_CHECKING, BinaryIO, Literal, SupportsIndex, overload
 
 import pyrogram
 from pyrogram import enums, raw, types, utils
@@ -42,6 +42,7 @@ from ..update import Update
 if TYPE_CHECKING:
     from collections.abc import Callable
     from datetime import datetime
+    from io import BytesIO
     from re import Match
 
     from pyrogram._typing import PathType
@@ -9653,6 +9654,48 @@ class Message(Object, Update):
 
         return await self._client.retract_vote(chat_id=self.chat.id, message_id=self.id)
 
+    @overload
+    async def download(
+        self,
+        file_name: PathType = "",
+        in_memory: Literal[False] = False,
+        block: Literal[True] = True,
+        progress: Callable | None = None,
+        progress_args: tuple = (),
+    ) -> str | list[str] | None: ...
+
+    @overload
+    async def download(
+        self,
+        file_name: PathType = "",
+        in_memory: Literal[True] = True,
+        block: Literal[True] = True,
+        progress: Callable | None = None,
+        progress_args: tuple = (),
+    ) -> BytesIO | list[BytesIO] | None: ...
+
+    @overload
+    async def download(
+        self,
+        file_name: PathType = "",
+        *,
+        in_memory: bool = False,
+        block: Literal[False],
+        progress: Callable | None = None,
+        progress_args: tuple = (),
+    ) -> None: ...
+
+    @overload
+    async def download(
+        self,
+        file_name: PathType,
+        in_memory: bool,
+        block: Literal[False],
+        progress: Callable | None = None,
+        progress_args: tuple = (),
+    ) -> None: ...
+
+    @overload
     async def download(
         self,
         file_name: PathType = "",
@@ -9660,7 +9703,16 @@ class Message(Object, Update):
         block: bool = True,
         progress: Callable | None = None,
         progress_args: tuple = (),
-    ) -> str | BinaryIO | list[str] | list[BinaryIO] | None:
+    ) -> str | BytesIO | list[str] | list[BytesIO] | None: ...
+
+    async def download(
+        self,
+        file_name: PathType = "",
+        in_memory: bool = False,
+        block: bool = True,
+        progress: Callable | None = None,
+        progress_args: tuple = (),
+    ) -> str | BytesIO | list[str] | list[BytesIO] | None:
         """Shortcut for method :obj:`~pyrogram.Client.download_media` will automatically fill method attributes:
 
         * message
@@ -9704,7 +9756,7 @@ class Message(Object, Update):
                 You can either keep ``*args`` or add every single extra argument in your function signature.
 
         Returns:
-            ``str`` | ``BinaryIO`` | ``list[str]`` | ``list[BinaryIO]`` | ``None``: On success, the absolute path of the
+            ``str`` | ``BytesIO`` | ``list[str]`` | ``list[BytesIO]`` | ``None``: On success, the absolute path of the
             downloaded file is returned. In case ``in_memory=True``, a binary file-like object with its attribute
             ".name" set is returned. If the message contains multiple media (purchased paid media), a list of paths or
             binary file-like objects is returned. In case the download failed or was deliberately stopped with
