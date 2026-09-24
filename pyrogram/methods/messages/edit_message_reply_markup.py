@@ -21,9 +21,7 @@ from __future__ import annotations as _annotations
 from typing import TYPE_CHECKING
 
 import pyrogram
-from pyrogram import raw
-from pyrogram import types
-from pyrogram import utils
+from pyrogram import raw, types, utils
 
 if TYPE_CHECKING:
     from datetime import datetime
@@ -79,8 +77,12 @@ class EditMessageReplyMarkup:
             )
         )
 
-        for i in r.updates:
-            if isinstance(i, (raw.types.UpdateEditMessage, raw.types.UpdateEditChannelMessage)):
-                return await types.Message._parse(
-                    self, i.message, {i.id: i for i in r.users}, {i.id: i for i in r.chats}
-                )
+        messages = await utils.parse_messages(
+            client=self,
+            messages=r,
+        )
+
+        if not messages:
+            raise ValueError("The response contains no edited message")
+
+        return messages[0]

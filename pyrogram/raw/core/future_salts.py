@@ -38,15 +38,15 @@ class FutureSalts(TLObject):
         self.now = now
         self.salts = salts
 
-    @staticmethod
-    def read(data: BytesIO, *args: Any) -> FutureSalts:
+    @classmethod
+    def read(cls, data: BytesIO, *args: Any) -> FutureSalts:
         req_msg_id = Long.read(data)
         now = Int.read(data)
 
         count = Int.read(data)
         salts = [FutureSalt.read(data) for _ in range(count)]
 
-        return FutureSalts(req_msg_id, now, salts)
+        return cls(req_msg_id, now, salts)
 
     def write(self, *args: Any) -> bytes:
         b = BytesIO()

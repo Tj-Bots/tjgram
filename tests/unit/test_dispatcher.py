@@ -29,7 +29,7 @@ from __future__ import annotations as _annotations
 import asyncio
 import sys
 import threading
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, Any, Final
 
 import pytest
 
@@ -39,6 +39,7 @@ from pyrogram.handlers import MessageHandler, RawUpdateHandler
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
+    from pyrogram.handlers.handler import Handler
     from pyrogram.types import Message
 
 _REGISTERING_THREADS: Final[int] = 2
@@ -73,7 +74,7 @@ def test_a_handler_registered_outside_a_loop_survives_into_one(client: Client) -
 
     client.add_handler(handler)
 
-    async def registered() -> dict[int, list[MessageHandler]]:
+    async def registered() -> dict[int, list[Handler[Any]]]:
         return client.dispatcher.groups
 
     assert asyncio.run(registered()) == {0: [handler]}
