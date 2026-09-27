@@ -466,7 +466,8 @@ class Client(Methods):
         #  through `run_coroutine_threadsafe`, which takes the loop as an argument.
         self._loop: asyncio.AbstractEventLoop | None = None
 
-        self.__config: raw.types.Config = None
+        self._app_config: raw.types.help.AppConfig | None = None
+        self.__config: raw.types.Config | None = None
 
     def __enter__(self):
         return self.start()

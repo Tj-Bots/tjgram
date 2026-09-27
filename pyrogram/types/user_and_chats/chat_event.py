@@ -418,10 +418,18 @@ class ChatEvent(Object):
             )
         elif isinstance(action, raw.types.ChannelAdminLogEventActionDeleteMessage):
             action_type = enums.ChatEventActionType.MESSAGE_DELETED
+
+            if client._app_config is not None:
+                app_config: dict = utils.jsonvalue_to_obj(client._app_config.config)
+            else:
+                app_config: dict = await client.get_app_config()
+
             message_deleted = types.ChatEventActionMessageDeleted(
                 message=await types.Message._parse(client, action.message, users, chats),
                 can_report_anti_spam_false_positive=event.user_id
-                == 5434988373,  # TODO: get id from GetAppConfig response
+                == int(app_config["telegram_antispam_user_id"])
+                if app_config.get("telegram_antispam_user_id")
+                else False,
             )
         elif isinstance(action, raw.types.ChannelAdminLogEventActionUpdatePinned):
             if action.message.pinned:

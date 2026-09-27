@@ -651,6 +651,7 @@ def pyrogram_api():
         Advanced
             invoke
             recover_gaps
+            get_app_config
             resolve_peer
             save_file
         """,
