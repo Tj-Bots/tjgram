@@ -276,7 +276,7 @@ class Session:
 
             self.ping_task = asyncio.create_task(self.ping_worker())
 
-            log.info("Session initialized: Pyrogram v%s (Layer %s)", pyrogram.__version__, layer)
+            log.info("Session initialized: Kurigram v%s (Layer %s)", pyrogram.__version__, layer)
             log.info("Device: %s - %s", self.client.device_model, self.client.app_version)
             log.info("System: %s (%s)", self.client.system_version, self.client.lang_code)
         except (AuthKeyDuplicated, Unauthorized) as e:
