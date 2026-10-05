@@ -2363,7 +2363,16 @@ class Message(Object, Update):
                 else None
             )
 
-            if replies:
+            if raw_reply_to_message is not None:  # For business bots only
+                parsed_message.reply_to_message = await types.Message._parse(
+                    client=client,
+                    message=raw_reply_to_message,
+                    users=users,
+                    chats=chats,
+                    business_connection_id=business_connection_id,
+                    replies=0,
+                )
+            elif replies:
                 if message.reply_to.reply_to_peer_id:
                     key = (
                         utils.get_peer_id(message.reply_to.reply_to_peer_id),
@@ -2376,16 +2385,7 @@ class Message(Object, Update):
 
                 parsed_message.reply_to_message = await client.message_cache.get(key)
 
-                if raw_reply_to_message:  # For business bots only
-                    parsed_message.reply_to_message = await types.Message._parse(
-                        client,
-                        raw_reply_to_message,
-                        users,
-                        chats,
-                        business_connection_id=business_connection_id,
-                        replies=0,
-                    )
-                elif client.fetch_replies and not parsed_message.reply_to_message:
+                if client.fetch_replies and not parsed_message.reply_to_message:
                     with contextlib.suppress(ChannelPrivate, ChannelInvalid, MessageIdsEmpty):
                         # `reply_to_params` holds a valid `(chat_id, message_ids)` or
                         #  `(chat_id, reply=True)` shape per branch above; a dict unpack
@@ -2425,7 +2425,7 @@ class Message(Object, Update):
     @staticmethod
     async def _parse(
         client: pyrogram.Client,
-        message: raw.base.Message,
+        message: raw.base.Message | raw.base.EphemeralMessage,
         users: dict[int, raw.base.User],
         chats: dict[int, raw.base.Chat],
         topics: dict[int, raw.base.ForumTopic] | None = None,
