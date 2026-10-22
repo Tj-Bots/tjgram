@@ -65,7 +65,6 @@ keywords = [
 ]
 
 [project.urls]
-[project.urls]
 Homepage = "https://github.com/tj-bots/tjgram"
 Source = "https://github.com/tj-bots/tjgram"
 Issues = "https://github.com/tj-bots/tjgram/issues"
