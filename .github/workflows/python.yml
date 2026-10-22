@@ -1,4 +1,4 @@
-name: Kurigram
+name: tjgram
 
 on:
   # Branches live in this repository and are tested through their pull request, so an

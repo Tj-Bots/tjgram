@@ -54,7 +54,7 @@ except ImportError:
 
     log.warning(
         "TgCrypto is missing! "
-        "Kurigram will work the same, but at a much slower speed. "
+        "tjgram will work the same, but at a much slower speed. "
         "More info: https://docs.pyrogram.org/topics/speedups"
     )
 

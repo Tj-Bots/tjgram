@@ -54,10 +54,10 @@ class UpdateProfile:
             .. code-block:: python
 
                 # Update your first name only
-                await app.update_profile(first_name="Kurigram")
+                await app.update_profile(first_name="tjgram")
 
                 # Update first name and bio
-                await app.update_profile(first_name="Kurigram", bio="https://docs.pyrogram.org/")
+                await app.update_profile(first_name="tjgram", bio="https://docs.pyrogram.org/")
 
                 # Remove the last name
                 await app.update_profile(last_name="")

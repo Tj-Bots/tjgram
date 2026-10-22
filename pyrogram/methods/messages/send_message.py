@@ -189,7 +189,7 @@ class SendMessage:
             .. code-block:: python
 
                 # Simple example
-                await app.send_message("me", "Message sent with **Kurigram**!")
+                await app.send_message("me", "Message sent with **tjgram**!")
 
                 # Disable web page previews
                 from pyrogram import types

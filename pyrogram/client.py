@@ -90,7 +90,7 @@ def _plugin_handlers(target: Any) -> Sequence[tuple[Handler, int]] | None:
 
 
 class Client(Methods):
-    """Kurigram Client, the main means for interacting with Telegram.
+    """tjgram Client, the main means for interacting with Telegram.
 
     Parameters:
         name (``str``):
@@ -106,7 +106,7 @@ class Client(Methods):
 
         app_version (``str``, *optional*):
             Application version.
-            Defaults to "Kurigram x.y.z".
+            Defaults to "tjgram x.y.z".
 
         device_model (``str``, *optional*):
             Device model.
@@ -190,7 +190,7 @@ class Client(Methods):
 
         workdir (``str`` | ``os.PathLike``, *optional*):
             Define a custom working directory.
-            The working directory is the location in the filesystem where Kurigram will store the session files.
+            The working directory is the location in the filesystem where tjgram will store the session files.
             Defaults to the parent directory of the main script.
 
         plugins (``dict``, *optional*):
@@ -279,7 +279,7 @@ class Client(Methods):
             A dict is converted on connect; an already built JSONValue is sent as it is.
     """
 
-    APP_VERSION = f"Kurigram {__version__}"
+    APP_VERSION = f"tjgram {__version__}"
     DEVICE_MODEL = f"{platform.python_implementation()} {platform.python_version()}"
     SYSTEM_VERSION = f"{platform.system()} {platform.release()}"
 
@@ -531,9 +531,9 @@ class Client(Methods):
         if self.bot_token:
             return await self.sign_in_bot(self.bot_token)
 
-        print(f"Welcome to Kurigram (version {__version__})")
+        print(f"Welcome to tjgram (version {__version__})")
         print(
-            f"Kurigram is free software and comes with ABSOLUTELY NO WARRANTY. Licensed\n"
+            f"tjgram is free software and comes with ABSOLUTELY NO WARRANTY. Licensed\n"
             f"under the terms of the {__license__}.\n"
         )
 
@@ -610,7 +610,7 @@ class Client(Methods):
                             # TODO: raw.functions.auth.CheckPaidAuth
                             raise Unauthorized(
                                 f"You need to pay {email_sent_code.sent_code.amount}{email_sent_code.sent_code.currency} or purchase premium to continue authorization "
-                                "process, which is currently not supported by Kurigram."
+                                "process, which is currently not supported by tjgram."
                             )
                 except BadRequest as e:
                     print(e.MESSAGE)
@@ -722,8 +722,8 @@ class Client(Methods):
             try:
                 print(
                     "\x1b[2J\n"
-                    f"Welcome to Kurigram (version {__version__})\n"
-                    "Kurigram is free software and comes with ABSOLUTELY NO WARRANTY. Licensed\n"
+                    f"Welcome to tjgram (version {__version__})\n"
+                    "tjgram is free software and comes with ABSOLUTELY NO WARRANTY. Licensed\n"
                     f"under the terms of the {__license__}.\n"
                     "Scan the QR code below to login\n"
                     "Settings -> Privacy and Security -> Active Sessions -> Scan QR Code.",
