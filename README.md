@@ -45,7 +45,7 @@ the main Telegram API through a user account (custom client) or a bot identity (
 - **Ready**: Install tjgram with pip and start building your applications right away.
 - **Easy**: Makes the Telegram API simple and intuitive, while still allowing advanced usages.
 - **Elegant**: Low-level details are abstracted and re-presented in a more convenient way.
-- **Fast**: Boosted up by [TgCrypto](https://github.com/pyrogram/tgcrypto), a high-performance cryptography library written in C.
+- **Fast**: Boosted up by [kuricrypt](https://github.com/kurigram-org/kuricrypt), a high-performance cryptography library written in Rust.
 - **Type-hinted**: Types and methods are all type-hinted, enabling excellent editor support.
 - **Async**: Fully asynchronous (also usable synchronously if wanted, for convenience).
 - **Powerful**: Full access to Telegram's API to execute any official client action and more.
@@ -67,7 +67,7 @@ pip install https://github.com/tj-bots/tjgram/archive/dev.zip --force-reinstall
 Optional dependencies
 
 ``` bash
-pip install tjgram[fast]     # TgCrypto and uvloop for better performance
+pip install tjgram[fast]     # kuricrypt and uvloop for better performance
 pip install tjgram[qrcode]   # QR code login support
 ```
 
