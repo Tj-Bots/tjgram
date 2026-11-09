@@ -48,7 +48,7 @@ class ReorderActiveUsernames:
             .. code-block:: python
 
                 # Reorder active usernames of the current user.
-                app.reorder_active_usernames(chat_id="me", order=["kurigram", "kurigrambot"])
+                app.reorder_active_usernames(chat_id="me", order=["tjgram", "tjgrambot"])
         """
         peer = await self.resolve_peer(chat_id)
 
